@@ -134,7 +134,7 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
 
   # Security Group for the EC2 instance
-  InstanceSecurityGroup:
+  QuickOpsSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
       GroupDescription: "Quick Ops - Allow SSH and HTTP access"
@@ -200,6 +200,8 @@ Resources:
               VolumeSize: 20  # Size in GB
               VolumeType: "gp3"  # Use gp3 EBS volume type
               DeleteOnTermination: true  # Delete volume on termination
+        SecurityGroupIds:
+          - !Ref QuickOpsSecurityGroup  # Attach the security group to the instance
         UserData:  # User data to bootstrap the instance
           Fn::Base64: !Sub |
             #!/bin/bash
