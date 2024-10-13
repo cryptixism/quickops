@@ -206,7 +206,7 @@ Resources:
           Fn::Base64: !Sub |
             #!/bin/bash
             set -x
-            export working_dir=/ops/quick_ops
+            export working_dir=/opt/quick_ops
             git clone ${GitRepoUrl} $working_dir
             cd $working_dir
             chmod +x ${BootstrapScript}
