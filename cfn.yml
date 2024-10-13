@@ -1,4 +1,5 @@
-# ManualStackRunner
+# QuickOpsStack
+
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Template to create a Spot EC2 instance on Ubuntu with automated replacement and bootstrap scripts from a Git repo.
 
@@ -22,6 +23,7 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: "Key pair to access the instance."
     Default: "ap-south-1.def.key"  # Fixed default key name for the Mumbai region
+    # Default: !Sub "${LatestUbuntuAmi}.def.key"  # Fixed default key name for the Mumbai region
 
   GitRepoUrl:
     Type: String
@@ -45,7 +47,7 @@ Parameters:
 
 Resources:
   # Create a new VPC
-  MyVPC:
+  QuickOpsVPC:
     Type: "AWS::EC2::VPC"
     Properties:
       CidrBlock: "10.0.0.0/16"  # CIDR block for the VPC
@@ -53,28 +55,28 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: "Name"
-          Value: "MyVPC"
+          Value: "QuickOpsVPC"
 
   # Create an Internet Gateway
-  MyInternetGateway:
+  QuickOpsInternetGateway:
     Type: "AWS::EC2::InternetGateway"
     Properties:
       Tags:
         - Key: "Name"
-          Value: "MyInternetGateway"
+          Value: "QuickOpsInternetGateway"
 
   # Attach the Internet Gateway to the VPC
   InternetGatewayAttachment:
     Type: "AWS::EC2::VPCGatewayAttachment"
     Properties:
-      VpcId: !Ref MyVPC
-      InternetGatewayId: !Ref MyInternetGateway
+      VpcId: !Ref QuickOpsVPC
+      InternetGatewayId: !Ref QuickOpsInternetGateway
 
   # Create 3 public subnets in different availability zones
   PublicSubnet1:
     Type: "AWS::EC2::Subnet"
     Properties:
-      VpcId: !Ref MyVPC
+      VpcId: !Ref QuickOpsVPC
       CidrBlock: "10.0.1.0/24"  # First public subnet CIDR block
       AvailabilityZone: !Select [0, !GetAZs '']  # First AZ
       MapPublicIpOnLaunch: true  # Automatically assign public IPs
@@ -82,7 +84,7 @@ Resources:
   PublicSubnet2:
     Type: "AWS::EC2::Subnet"
     Properties:
-      VpcId: !Ref MyVPC
+      VpcId: !Ref QuickOpsVPC
       CidrBlock: "10.0.2.0/24"  # Second public subnet CIDR block
       AvailabilityZone: !Select [1, !GetAZs '']  # Second AZ
       MapPublicIpOnLaunch: true  # Automatically assign public IPs
@@ -90,7 +92,7 @@ Resources:
   PublicSubnet3:
     Type: "AWS::EC2::Subnet"
     Properties:
-      VpcId: !Ref MyVPC
+      VpcId: !Ref QuickOpsVPC
       CidrBlock: "10.0.3.0/24"  # Third public subnet CIDR block
       AvailabilityZone: !Select [2, !GetAZs '']  # Third AZ
       MapPublicIpOnLaunch: true  # Automatically assign public IPs
@@ -99,7 +101,7 @@ Resources:
   PublicRouteTable:
     Type: "AWS::EC2::RouteTable"
     Properties:
-      VpcId: !Ref MyVPC  # Associate this route table with the same VPC
+      VpcId: !Ref QuickOpsVPC  # Associate this route table with the same VPC
       Tags:
         - Key: "Name"
           Value: "PublicRouteTable"
@@ -110,7 +112,7 @@ Resources:
     Properties:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: "0.0.0.0/0"  # Route all traffic to the internet
-      GatewayId: !Ref MyInternetGateway  # Ensure this references the correct IGW
+      GatewayId: !Ref QuickOpsInternetGateway  # Ensure this references the correct IGW
 
   # Associate the public route table with the public subnets
   PublicSubnet1RouteTableAssociation:
@@ -135,20 +137,16 @@ Resources:
   InstanceSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupDescription: "Allow SSH and HTTP access"
-      VpcId: !Ref MyVPC
+      GroupDescription: "Quick Ops - Allow SSH and HTTP access"
+      VpcId: !Ref QuickOpsVPC
       SecurityGroupIngress:
         - IpProtocol: "tcp"
           FromPort: 22
           ToPort: 22
           CidrIp: "0.0.0.0/0"  # Allow SSH from anywhere (consider restricting this)
-        - IpProtocol: "tcp"
-          FromPort: 80
-          ToPort: 80
-          CidrIp: "0.0.0.0/0"  # Allow HTTP from anywhere (consider restricting this)
 
   # IAM Role for the Spot Instance
-  SpotInstanceRole:
+  QuickOpsSpotInstanceRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -180,21 +178,21 @@ Resources:
                   - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/manual/conf/*"  # Using !Sub for dynamic ARN
 
   # Instance Profile that will associate the above IAM role with the EC2 instance
-  SpotInstanceProfile:
+  QuickOpsSpotInstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
     Properties:
       Roles:
-        - Ref: SpotInstanceRole
+        - Ref: QuickOpsSpotInstanceRole
 
   # Launch Template for the EC2 Spot Instance
-  SpotInstanceLaunchTemplate:
+  QuickOpsSpotInstanceLaunchTemplate:
     Type: "AWS::EC2::LaunchTemplate"
     Properties:
       LaunchTemplateData:
         InstanceType: !Ref InstanceType  # Use the instance type parameter
         KeyName: !Ref KeyName            # Use the key pair parameter
         IamInstanceProfile:
-          Arn: !GetAtt SpotInstanceProfile.Arn  # Attach the IAM role
+          Arn: !GetAtt QuickOpsSpotInstanceProfile.Arn  # Attach the IAM role
         ImageId: !Sub "{{resolve:ssm:${LatestUbuntuAmi}}}"  # Use SSM parameter to fetch the specified Ubuntu AMI ID
         BlockDeviceMappings:  # Specify EBS volume configuration
           - DeviceName: "/dev/xvda"
@@ -205,12 +203,12 @@ Resources:
         UserData:  # User data to bootstrap the instance
           Fn::Base64: !Sub |
             #!/bin/bash
-            sudo apt update -y
-            sudo apt install -y git
-            git clone ${GitRepoUrl} /home/ubuntu/repo  # Clone the Git repository
-            cd /home/ubuntu/repo  # Change to the repo directory
-            chmod +x ${BootstrapScript}  # Make the bootstrap script executable
-            ./${BootstrapScript}  # Execute the bootstrap script
+            set -x
+            export working_dir=/ops/quick_ops
+            git clone ${GitRepoUrl} $working_dir
+            cd $working_dir
+            chmod +x ${BootstrapScript}
+            ./${BootstrapScript}
 
   # Auto Scaling Group to manage the Spot Instances
   SpotInstanceAutoScalingGroup:
@@ -226,31 +224,10 @@ Resources:
       MixedInstancesPolicy:
         LaunchTemplate:
           LaunchTemplateSpecification:
-            LaunchTemplateId: !Ref SpotInstanceLaunchTemplate  # Reference the launch template
-            Version: !GetAtt SpotInstanceLaunchTemplate.LatestVersionNumber  # Use the latest version of the Launch Template
+            LaunchTemplateId: !Ref QuickOpsSpotInstanceLaunchTemplate  # Reference the launch template
+            Version: !GetAtt QuickOpsSpotInstanceLaunchTemplate.LatestVersionNumber  # Use the latest version of the Launch Template
         InstancesDistribution:
           SpotAllocationStrategy: "lowest-price"  # Set allocation strategy to lowest price
           SpotMaxPrice: !Ref MaxSpotPrice  # Set the maximum price to match the parameter
           SpotInstancePools: 2  # Number of Spot instance pools to use
           OnDemandPercentageAboveBaseCapacity: 0  # Only use Spot instances
-
-Outputs:
-  # Output the Auto Scaling Group ID to track the instance
-  SpotInstanceId:
-    Description: "The instance ID of the Spot Instance"
-    Value: !Ref SpotInstanceAutoScalingGroup
-
-  # Output the VPC ID
-  VpcId:
-    Description: "The VPC ID"
-    Value: !Ref MyVPC
-
-  # Output the Internet Gateway ID
-  InternetGatewayId:
-    Description: "The Internet Gateway ID"
-    Value: !Ref MyInternetGateway
-
-  # Output the Public Subnet IDs
-  PublicSubnetIds:
-    Description: "The Public Subnet IDs"
-    Value: !Join [", ", [!Ref PublicSubnet1, !Ref PublicSubnet2, !Ref PublicSubnet3]]
