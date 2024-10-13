@@ -1,0 +1,178 @@
+# ManualStackRunner
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template to create a Spot EC2 instance on Ubuntu with automated replacement and bootstrap scripts from a Git repo.
+
+Parameters:
+  Region:
+    Type: String
+    Description: "The AWS region where the resources will be created."
+    Default: "ap-south-1"  # Default to Mumbai region
+
+  InstanceType:
+    Type: String
+    Description: "EC2 Instance Type (e.g., t3.micro, t3.small)"
+    Default: "t3.micro"
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+    ConstraintDescription: "Must be a valid EC2 instance type."
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "Key pair to access the instance."
+    Default: "ap-south-1.def.key"  # Fixed default key name for the Mumbai region
+
+  GitRepoUrl:
+    Type: String
+    Description: "URL of the Git repository to clone."
+    Default: "https://github.com/cryptixism/manual.git"  # Updated default Git repo
+
+  BootstrapScript:
+    Type: String
+    Description: "Name of the bootstrap script to run from the cloned repo."
+    Default: "bootstrap.sh"
+
+  MaxSpotPrice:
+    Type: String
+    Description: "The maximum price you're willing to pay for the Spot Instance (e.g., 0.004)."
+    Default: "0.004"  # Updated default max spot price
+
+  LatestUbuntuAmi:
+    Type: String
+    Description: "The AMI ID for the latest Ubuntu version."
+    Default: "/aws/service/canonical/ubuntu/server/24.10/stable/current/amd64/hvm/ebs-gp3/ami-id"  # Default value pointing to the specified Ubuntu AMI
+
+Resources:
+  # Create a new VPC
+  MyVPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: "10.0.0.0/16"  # CIDR block for the VPC
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: "Name"
+          Value: "MyVPC"
+
+  # Create 3 public subnets in different availability zones
+  PublicSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "10.0.1.0/24"  # First public subnet CIDR block
+      AvailabilityZone: !Select [0, !GetAZs '']  # First AZ
+      MapPublicIpOnLaunch: true  # Automatically assign public IPs
+
+  PublicSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "10.0.2.0/24"  # Second public subnet CIDR block
+      AvailabilityZone: !Select [1, !GetAZs '']  # Second AZ
+      MapPublicIpOnLaunch: true  # Automatically assign public IPs
+
+  PublicSubnet3:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "10.0.3.0/24"  # Third public subnet CIDR block
+      AvailabilityZone: !Select [2, !GetAZs '']  # Third AZ
+      MapPublicIpOnLaunch: true  # Automatically assign public IPs
+
+  # IAM Role for the Spot Instance
+  SpotInstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "ec2.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "SpotAndSSMReadPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Grant EC2 instances access to necessary Spot and Auto Scaling actions
+              - Effect: "Allow"
+                Action:
+                  - "ec2:DescribeSpotInstanceRequests"
+                  - "ec2:DescribeInstances"
+                  - "autoscaling:DescribeAutoScalingGroups"
+                  - "autoscaling:UpdateAutoScalingGroup"
+                Resource: "*"  # Allow actions on all resources; restrict as necessary
+              # Grant read-only access to SSM parameters under /manual/conf/*
+              - Effect: "Allow"
+                Action:
+                  - "ssm:GetParameter"
+                  - "ssm:GetParameters"
+                Resource: 
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/manual/conf/*"  # Using !Sub for dynamic ARN
+
+  # Instance Profile that will associate the above IAM role with the EC2 instance
+  SpotInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Roles:
+        - Ref: SpotInstanceRole
+
+  # Launch Template for the EC2 Spot Instance
+  SpotInstanceLaunchTemplate:
+    Type: "AWS::EC2::LaunchTemplate"
+    Properties:
+      LaunchTemplateData:
+        InstanceType: !Ref InstanceType  # Use the instance type parameter
+        KeyName: !Ref KeyName            # Use the key pair parameter
+        IamInstanceProfile:
+          Arn: !GetAtt SpotInstanceProfile.Arn  # Attach the IAM role
+        ImageId: !Sub "{{resolve:ssm:${LatestUbuntuAmi}}}"  # Use SSM parameter to fetch the specified Ubuntu AMI ID
+        BlockDeviceMappings:  # Specify EBS volume settings
+          - DeviceName: "/dev/xvda"  # Device name for the root volume
+            Ebs:
+              VolumeSize: 20  # Set volume size to 20 GB
+              VolumeType: "gp3"  # Use gp3 volume type
+        UserData:
+          Fn::Base64: |
+            #!/bin/bash
+            sudo apt update -y
+            sudo apt install -y git
+            git clone {{ !Ref GitRepoUrl }} /home/ubuntu/repo
+            cd /home/ubuntu/repo
+            chmod +x {{ !Ref BootstrapScript }}
+            ./{{ !Ref BootstrapScript }}
+      TagSpecifications:
+        - ResourceType: "launch-template"  # Corrected ResourceType for Launch Template
+          Tags:
+            - Key: "Name"
+              Value: "SpotInstanceWithBootstrap"
+
+  # Auto Scaling Group to manage the Spot Instance
+  SpotInstanceAutoScalingGroup:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      MinSize: "1"  # Minimum size of the Auto Scaling Group
+      MaxSize: "1"  # Maximum size of the Auto Scaling Group
+      DesiredCapacity: "1"  # Desired count of instances is 1
+      VPCZoneIdentifier:
+        - !Ref PublicSubnet1  # Reference the first public subnet for instance placement
+        - !Ref PublicSubnet2  # Reference the second public subnet for instance placement
+        - !Ref PublicSubnet3  # Reference the third public subnet for instance placement
+      MixedInstancesPolicy:
+        LaunchTemplate:
+          LaunchTemplateSpecification:
+            LaunchTemplateId: !Ref SpotInstanceLaunchTemplate  # Reference the launch template
+            Version: !GetAtt SpotInstanceLaunchTemplate.LatestVersionNumber  # Use the latest version of the Launch Template
+        InstancesDistribution:
+          SpotAllocationStrategy: "lowest-price"  # Set allocation strategy to lowest price
+          SpotMaxPrice: !Ref MaxSpotPrice  # Set the maximum price to match the parameter
+          SpotInstancePools: 2  # Number of Spot instance pools to use
+          OnDemandPercentageAboveBaseCapacity: 0  # Only use Spot instances
+
+Outputs:
+  # Output the Auto Scaling Group ID to track the instance
+  SpotInstanceId:
+    Description: "The instance ID of the Spot Instance"
+    Value: !Ref SpotInstanceAutoScalingGroup
