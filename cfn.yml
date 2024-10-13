@@ -196,20 +196,21 @@ Resources:
         IamInstanceProfile:
           Arn: !GetAtt SpotInstanceProfile.Arn  # Attach the IAM role
         ImageId: !Sub "{{resolve:ssm:${LatestUbuntuAmi}}}"  # Use SSM parameter to fetch the specified Ubuntu AMI ID
-        BlockDeviceMappings:  # Specify EBS volume settings
-          - DeviceName: "/dev/xvda"  # Device name for the root volume
+        BlockDeviceMappings:  # Specify EBS volume configuration
+          - DeviceName: "/dev/xvda"
             Ebs:
-              VolumeSize: 20  # Set volume size to 20 GB
-              VolumeType: "gp3"  # Use gp3 volume type
-        SecurityGroupIds:
-          - !Ref InstanceSecurityGroup  # Attach the security group to the instance
-        UserData:
-          Fn::Base64: |
+              VolumeSize: 20  # Size in GB
+              VolumeType: "gp3"  # Use gp3 EBS volume type
+              DeleteOnTermination: true  # Delete volume on termination
+        UserData:  # User data to bootstrap the instance
+          Fn::Base64: !Sub |
             #!/bin/bash
-            git clone !Ref GitRepoUrl /home/ubuntu/repo  # Clone the specified Git repo
+            sudo apt update -y
+            sudo apt install -y git
+            git clone ${GitRepoUrl} /home/ubuntu/repo  # Clone the Git repository
             cd /home/ubuntu/repo  # Change to the repo directory
-            chmod +x !Ref BootstrapScript  # Make the bootstrap script executable
-            ./!Ref BootstrapScript  # Execute the bootstrap script
+            chmod +x ${BootstrapScript}  # Make the bootstrap script executable
+            ./${BootstrapScript}  # Execute the bootstrap script
 
   # Auto Scaling Group to manage the Spot Instances
   SpotInstanceAutoScalingGroup:
