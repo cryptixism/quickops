@@ -22,8 +22,7 @@ Parameters:
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
     Description: "Key pair to access the instance."
-    Default: "ap-south-1.def.key"  # Fixed default key name for the Mumbai region
-    # Default: !Sub "${LatestUbuntuAmi}.def.key"  # Fixed default key name for the Mumbai region
+    Default: !Sub "${LatestUbuntuAmi}.def.key"  # Fixed default key name for the Mumbai region
 
   GitRepoUrl:
     Type: String
