@@ -53,16 +53,6 @@ Parameters:
     Description: "The Allocation ID of the EIP you like to be used. If not provided, no EIP will be used and IP will change often."
     Default: "None"
 
-  InstanceType:
-    Type: String
-    Description: "EC2 Instance Type (e.g., t3.micro, t3.small)"
-    Default: "t3.micro"
-    AllowedValues:
-      - t3.micro
-      - t3.small
-      - t3.medium
-    ConstraintDescription: "Must be a valid EC2 instance type."
-
 Resources:
   # S3 bucket
   QuickOpsS3Bucket:
@@ -255,7 +245,7 @@ Resources:
     Type: "AWS::EC2::LaunchTemplate"
     Properties:
       LaunchTemplateData:
-        InstanceType: !Ref InstanceType  # Use the instance type parameter
+        InstanceType: "t3.nano"
         KeyName: !Ref KeyPairName            # Use the key pair parameter
         IamInstanceProfile:
           Arn: !GetAtt QuickOpsSpotInstanceProfile.Arn  # Attach the IAM role
@@ -302,8 +292,12 @@ Resources:
           LaunchTemplateSpecification:
             LaunchTemplateId: !Ref QuickOpsSpotInstanceLaunchTemplate  # Reference the launch template
             Version: !GetAtt QuickOpsSpotInstanceLaunchTemplate.LatestVersionNumber  # Use the latest version of the Launch Template
+          Overrides:
+            - InstanceType: "t3.nano"
+            - InstanceType: "t3.micro" 
+            - InstanceType: "t3.medium" 
         InstancesDistribution:
           SpotAllocationStrategy: "lowest-price"  # Set allocation strategy to lowest price
           SpotMaxPrice: !Ref MaxSpotPrice  # Set the maximum price to match the parameter
-          SpotInstancePools: 2  # Number of Spot instance pools to use
+          SpotInstancePools: 9  # Number of Spot instance pools to use
           OnDemandPercentageAboveBaseCapacity: 0  # Only use Spot instances
