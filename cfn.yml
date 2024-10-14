@@ -68,7 +68,10 @@ Resources:
   QuickOpsS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: quick-ops-bucket
+      BucketName:
+        !Sub
+          - "quick-ops-bucket-${RandomGUID}"
+          - { RandomGUID: !Select [0, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId ]]]] }
 
   # Create a new VPC
   QuickOpsVPC:
@@ -224,8 +227,22 @@ Resources:
                 Action:
                   - "s3:GetObject"
                   - "s3:PutObject"
-                Resource: !Sub "${QuickOpsS3Bucket.Arn}/*"
-
+                  - "s3:ListBucket"
+                Resource: 
+                  - !Sub "${QuickOpsS3Bucket.Arn}/*"
+                  - !Sub "${QuickOpsS3Bucket.Arn}"
+        - PolicyName: "AssociateEipWithEc2"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: 
+                  - "ec2:AssociateAddress"
+                Resource: 
+                  - "arn:aws:ec2:*:*:instance/*"
+                  - "arn:aws:ec2:*:*:elastic-ip/*"
+                  - "arn:aws:ec2:*:*:network-interface/*"
+  
   # Instance Profile that will associate the above IAM role with the EC2 instance
   QuickOpsSpotInstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
@@ -256,7 +273,7 @@ Resources:
             #!/bin/bash
             set -x
             sudo apt-get update
-            sudo chown $USER:$USER -R /opt
+            sudo apt-get -y install awscli net-tools
             ### export cfn parameters
             export mtg_port=${TelegramProxyPort}
             export mtg_secret=${TelegramProxySecret}
