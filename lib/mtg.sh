@@ -1,5 +1,4 @@
 #!/bin/bash 
-set -x
 
 cp $s3_dir/mtg /usr/local/bin/mtg
 cp $scripts_dir/mtg.service /etc/systemd/system/mtg.service

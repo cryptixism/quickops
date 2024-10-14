@@ -1,5 +1,4 @@
 #!/bin/bash 
-set -x
 
 export instance_id=$(cat /var/lib/cloud/data/instance-id)
 
