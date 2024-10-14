@@ -1,0 +1,38 @@
+secret = "SECRET_ENV"
+bind-to = "0.0.0.0:BIND_PORT_ENV"
+debug = false
+concurrency = 100
+prefer-ip = "prefer-ipv6"
+domain-fronting-port = 443
+tolerate-time-skewness = "5s"
+allow-fallback-on-unknown-dc = false
+[network]
+doh-ip = "9.9.9.9"
+proxies = []
+[network.timeout]
+tcp = "5s"
+http = "10s"
+idle = "1m"
+[defense.anti-replay]
+enabled = true
+max-size = "1mib"
+error-rate = 0.001
+[defense.blocklist]
+enabled = true
+download-concurrency = 2
+urls = ["https://iplists.firehol.org/files/firehol_level1.netset"]
+update-each = "24h"
+[defense.allowlist]
+enabled = false
+download-concurrency = 2
+update-each = "24h"
+[stats.statsd]
+enabled = false
+address = "127.0.0.1:8888"
+metric-prefix = "mtg"
+tag-format = "datadog"
+[stats.prometheus]
+enabled = false
+bind-to = "0.0.0.0:8888"
+http-path = "/"
+metric-prefix = "mtg"

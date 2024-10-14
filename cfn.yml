@@ -4,10 +4,54 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: Template to create a Spot EC2 instance on Ubuntu with automated replacement and bootstrap scripts from a Git repo.
 
 Parameters:
-  Region:
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "Key pair to access the instance."
+
+  TelegramProxySecret:
     Type: String
-    Description: "The AWS region where the resources will be created."
-    Default: "ap-south-1"  # Default to Mumbai region
+    Description: "32 Hex Chars for Telegram Proxy Secret."
+    Default: "ABCDEF00000000000000000987654321"
+  
+  TelegramProxyPort:
+    Type: String
+    Description: "The port that will be opened for the Telegram Proxy"
+    Default: "36343"
+
+  GitRepoUrl:
+    Type: String
+    Description: "URL of the Git repository to clone."
+    Default: "https://github.com/cryptixism/quickops.git"
+
+  GitRepoBranch:
+    Type: String
+    Description: "The branch to clone."
+    Default: "main"
+
+  MaxSpotPrice:
+    Type: String
+    Description: "The maximum price you're willing to pay for the Spot Instance per hour. This may affect availability of the service."
+    Default: "0.004"  # Default is minimum spot price for t3.micro
+
+  XrayPanelPort:
+    Type: String
+    Description: "The port that will be opened for the xray panel (x-ui)"
+    Default: "48348"
+
+  XrayClientPort:
+    Type: String
+    Description: "The port that will be opened for the xray client"
+    Default: "37896"
+
+  LatestUbuntuAmi:
+    Type: String
+    Description: "The AMI ID for the latest Ubuntu version."
+    Default: "/aws/service/canonical/ubuntu/server/24.10/stable/current/amd64/hvm/ebs-gp3/ami-id"  # Default value pointing to the specified Ubuntu AMI
+
+  ElasticIpAllocationId:
+    Type: String
+    Description: "The Allocation ID of the EIP you like to be used. If not provided, no EIP will be used and IP will change often."
+    Default: "None"
 
   InstanceType:
     Type: String
@@ -19,32 +63,13 @@ Parameters:
       - t3.medium
     ConstraintDescription: "Must be a valid EC2 instance type."
 
-  KeyName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: "Key pair to access the instance."
-    Default: !Sub "${LatestUbuntuAmi}.def.key"  # Fixed default key name for the Mumbai region
-
-  GitRepoUrl:
-    Type: String
-    Description: "URL of the Git repository to clone."
-    Default: "https://github.com/cryptixism/manual.git"  # Updated default Git repo
-
-  BootstrapScript:
-    Type: String
-    Description: "Name of the bootstrap script to run from the cloned repo."
-    Default: "bootstrap.sh"
-
-  MaxSpotPrice:
-    Type: String
-    Description: "The maximum price you're willing to pay for the Spot Instance (e.g., 0.004)."
-    Default: "0.004"  # Updated default max spot price
-
-  LatestUbuntuAmi:
-    Type: String
-    Description: "The AMI ID for the latest Ubuntu version."
-    Default: "/aws/service/canonical/ubuntu/server/24.10/stable/current/amd64/hvm/ebs-gp3/ami-id"  # Default value pointing to the specified Ubuntu AMI
-
 Resources:
+  # S3 bucket
+  QuickOpsS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: quick-ops-bucket
+
   # Create a new VPC
   QuickOpsVPC:
     Type: "AWS::EC2::VPC"
@@ -143,20 +168,20 @@ Resources:
           FromPort: 22
           ToPort: 22
           Description: "ssh"
-          CidrIp: "0.0.0.0/0"  # Change this to your IP 
+          CidrIp: "0.0.0.0/0"
         - IpProtocol: "tcp"
-          FromPort: 22374
-          ToPort: 22374
-          Description: "x-ui"
-          CidrIp: "0.0.0.0/0"  # Change this to your IP 
-        - IpProtocol: "tcp"
-          FromPort: 36343
-          ToPort: 36343
+          FromPort: !Ref TelegramProxyPort
+          ToPort: !Ref TelegramProxyPort
           Description: "mtg"
           CidrIp: "0.0.0.0/0"   
         - IpProtocol: "tcp"
-          FromPort: 43500
-          ToPort: 43600
+          FromPort: !Ref XrayPanelPort
+          ToPort: !Ref XrayPanelPort
+          Description: "x-ui"
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: "tcp"
+          FromPort: !Ref XrayClientPort
+          ToPort: !Ref XrayClientPort
           Description: "xray"
           CidrIp: "0.0.0.0/0"
 
@@ -191,6 +216,15 @@ Resources:
                   - "ssm:GetParameters"
                 Resource: 
                   - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/manual/conf/*"  # Using !Sub for dynamic ARN
+        - PolicyName: "S3AccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                Resource: !Sub "${QuickOpsS3Bucket.Arn}/*"
 
   # Instance Profile that will associate the above IAM role with the EC2 instance
   QuickOpsSpotInstanceProfile:
@@ -205,7 +239,7 @@ Resources:
     Properties:
       LaunchTemplateData:
         InstanceType: !Ref InstanceType  # Use the instance type parameter
-        KeyName: !Ref KeyName            # Use the key pair parameter
+        KeyName: !Ref KeyPairName            # Use the key pair parameter
         IamInstanceProfile:
           Arn: !GetAtt QuickOpsSpotInstanceProfile.Arn  # Attach the IAM role
         ImageId: !Sub "{{resolve:ssm:${LatestUbuntuAmi}}}"  # Use SSM parameter to fetch the specified Ubuntu AMI ID
@@ -221,11 +255,20 @@ Resources:
           Fn::Base64: !Sub |
             #!/bin/bash
             set -x
-            export working_dir=/opt/quick_ops
-            git clone ${GitRepoUrl} $working_dir
-            cd $working_dir
-            chmod +x ${BootstrapScript}
-            ./${BootstrapScript}
+            sudo apt-get update
+            sudo chown $USER:$USER -R /opt
+            ### export cfn parameters
+            export xyz=${XYZ}
+            export mtg_port=${TelegramProxyPort}
+            export mtg_secret=${TelegramProxySecret}
+            export eip_allocation_id=${ElasticIpAllocationId}
+            export s3_bucket_arn=${QuickOpsS3Bucket.Arn}
+            ### export directories
+            #### clone and script
+            export scripts_dir=/opt/scripts
+            git clone -b ${GitRepoBranch} ${GitRepoUrl} $scripts_dir
+            chmod +x -R $scripts_dir
+            source $scripts_dir/bootstrap.sh
 
   # Auto Scaling Group to manage the Spot Instances
   SpotInstanceAutoScalingGroup:
