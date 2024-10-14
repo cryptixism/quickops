@@ -24,9 +24,6 @@ wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/M
 chmod +x /opt/x-ui/x-ui.sh
 chmod +x /usr/bin/x-ui
 
-# curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh -o install.sh
-# sudo bash install.sh
-
 systemctl daemon-reload
 systemctl enable x-ui
 systemctl restart x-ui
