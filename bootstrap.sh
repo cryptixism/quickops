@@ -2,7 +2,7 @@
 set -x
 
 ## sync data from s3
-export s3_dir=/opt/s3
+export s3_dir="/opt/s3"
 export s3_bucket_name=${s3_bucket_arn##*:}
 aws s3 sync s3://${s3_bucket_name}/data $s3_dir/
 
