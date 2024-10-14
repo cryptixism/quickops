@@ -301,3 +301,7 @@ Resources:
           SpotMaxPrice: !Ref MaxSpotPrice  # Set the maximum price to match the parameter
           SpotInstancePools: 9  # Number of Spot instance pools to use
           OnDemandPercentageAboveBaseCapacity: 0  # Only use Spot instances
+          AvailabilityZones:
+              - !Select [0, !GetAZs '']  # First AZ
+              - !Select [1, !GetAZs '']  # Second AZ
+              - !Select [2, !GetAZs '']  # Third AZ
