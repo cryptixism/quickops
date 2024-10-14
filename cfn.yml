@@ -18,6 +18,11 @@ Parameters:
     Description: "The port that will be opened for the Telegram Proxy"
     Default: "36343"
 
+  ElasticIpAllocationId:
+    Type: String
+    Description: "The Allocation ID of the EIP you like to be used. If not provided, no EIP will be used and IP will change often."
+    Default: "None"
+
   GitRepoUrl:
     Type: String
     Description: "URL of the Git repository to clone."
@@ -47,11 +52,6 @@ Parameters:
     Type: String
     Description: "The AMI ID for the latest Ubuntu version."
     Default: "/aws/service/canonical/ubuntu/server/24.10/stable/current/amd64/hvm/ebs-gp3/ami-id"  # Default value pointing to the specified Ubuntu AMI
-
-  ElasticIpAllocationId:
-    Type: String
-    Description: "The Allocation ID of the EIP you like to be used. If not provided, no EIP will be used and IP will change often."
-    Default: "None"
 
 Resources:
   # S3 bucket
