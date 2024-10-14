@@ -258,7 +258,6 @@ Resources:
             sudo apt-get update
             sudo chown $USER:$USER -R /opt
             ### export cfn parameters
-            export xyz=${XYZ}
             export mtg_port=${TelegramProxyPort}
             export mtg_secret=${TelegramProxySecret}
             export eip_allocation_id=${ElasticIpAllocationId}
