@@ -43,10 +43,15 @@ Parameters:
     Description: "The port that will be opened for the xray panel (x-ui)"
     Default: "48348"
 
-  XrayClientPort:
+  XrayClientPortFrom:
     Type: String
     Description: "The port that will be opened for the xray client"
-    Default: "37896"
+    Default: "51000"
+
+  XrayClientPortTo:
+    Type: String
+    Description: "The port that will be opened for the xray client"
+    Default: "59000"
 
   LatestUbuntuAmi:
     Type: String
@@ -173,8 +178,8 @@ Resources:
           Description: "x-ui"
           CidrIp: "0.0.0.0/0"
         - IpProtocol: "tcp"
-          FromPort: !Ref XrayClientPort
-          ToPort: !Ref XrayClientPort
+          FromPort: !Ref XrayClientPortFrom
+          ToPort: !Ref XrayClientPortTo
           Description: "xray"
           CidrIp: "0.0.0.0/0"
 
