@@ -5,6 +5,8 @@ Deploying xray, x-ui, mtproxy in AWS using spot instances
 1- manually install the 3x-ui and do the configuration as you wish
 2- copy the configurations and the certificates to s3
 3- build the mtg and copy binary to s3
+4- create an ec2 key pair, download it, and note the name
+4- create an eip and note the allocation id
 
 ## Deploy via Console
 1- go to https://ap-south-1.console.aws.amazon.com/cloudformation  
@@ -23,3 +25,11 @@ aws cloudformation deploy --template-file /path/to/cfn.yml --stack-name name-of-
   --parameter-overrides TelegramProxySecret='ABCDEF00000000000000000987654321' \
   --parameter-overrides MaxSpotPrice='0.005'
 ```
+
+## To Do
+1- confirm termination and interruptions backup settings
+2- if eip allocation id is not provided, update dns 
+3- add whatsapp proxy
+4- containerize  
+5- haproxy as gateway
+6- ...
