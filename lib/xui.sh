@@ -14,7 +14,7 @@ mkdir -p /etc/x-ui
 cp $s3_dir/x-ui.db /etc/x-ui/x-ui.db
 
 cd /opt
-wget -q --timeout 10 --no-check-certificate -O -N x-ui-linux-${arch}.tar.gz https://github.com/MHSanaei/3x-ui/releases/download/${xui_version}/x-ui-linux-${arch}.tar.gz
+wget -q --timeout 10 --no-check-certificate -O x-ui-linux-${arch}.tar.gz https://github.com/MHSanaei/3x-ui/releases/download/${xui_version}/x-ui-linux-${arch}.tar.gz
 tar zxvf x-ui-linux-${arch}.tar.gz
 rm x-ui-linux-${arch}.tar.gz -f
 cd x-ui
