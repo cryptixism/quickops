@@ -4,41 +4,54 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: Template to create a Spot EC2 instance on Ubuntu with automated replacement and bootstrap scripts from a Git repo.
 
 Parameters:
-  Region:
-    Type: String
-    Description: "The AWS region where the resources will be created."
-    Default: "ap-south-1"  # Default to Mumbai region
-
-  InstanceType:
-    Type: String
-    Description: "EC2 Instance Type (e.g., t3.micro, t3.small)"
-    Default: "t3.micro"
-    AllowedValues:
-      - t3.micro
-      - t3.small
-      - t3.medium
-    ConstraintDescription: "Must be a valid EC2 instance type."
-
-  KeyName:
+  KeyPairName:
     Type: AWS::EC2::KeyPair::KeyName
     Description: "Key pair to access the instance."
-    Default: "ap-south-1.def.key"  # Fixed default key name for the Mumbai region
-    # Default: !Sub "${LatestUbuntuAmi}.def.key"  # Fixed default key name for the Mumbai region
+
+  TelegramProxySecret:
+    Type: String
+    Description: "32 Hex Chars for Telegram Proxy Secret."
+    Default: "ABCDEF00000000000000000987654321"
+  
+  TelegramProxyPort:
+    Type: String
+    Description: "The port that will be opened for the Telegram Proxy"
+    Default: "36343"
+
+  ElasticIpAllocationId:
+    Type: String
+    Description: "The Allocation ID of the EIP you like to be used. If not provided, no EIP will be used and IP will change often."
+    Default: "None"
 
   GitRepoUrl:
     Type: String
     Description: "URL of the Git repository to clone."
-    Default: "https://github.com/cryptixism/manual.git"  # Updated default Git repo
+    Default: "https://github.com/cryptixism/quickops.git"
 
-  BootstrapScript:
+  GitRepoBranch:
     Type: String
-    Description: "Name of the bootstrap script to run from the cloned repo."
-    Default: "bootstrap.sh"
+    Description: "The branch to clone."
+    Default: "main"
 
   MaxSpotPrice:
     Type: String
-    Description: "The maximum price you're willing to pay for the Spot Instance (e.g., 0.004)."
-    Default: "0.004"  # Updated default max spot price
+    Description: "The maximum price you're willing to pay for the Spot Instance per hour. This may affect availability of the service."
+    Default: "0.004"  # Default is minimum spot price for t3.micro
+
+  XrayPanelPort:
+    Type: String
+    Description: "The port that will be opened for the xray panel (x-ui)"
+    Default: "48348"
+
+  XrayClientPortFrom:
+    Type: String
+    Description: "The port that will be opened for the xray client"
+    Default: "51000"
+
+  XrayClientPortTo:
+    Type: String
+    Description: "The port that will be opened for the xray client"
+    Default: "59000"
 
   LatestUbuntuAmi:
     Type: String
@@ -46,6 +59,15 @@ Parameters:
     Default: "/aws/service/canonical/ubuntu/server/24.10/stable/current/amd64/hvm/ebs-gp3/ami-id"  # Default value pointing to the specified Ubuntu AMI
 
 Resources:
+  # S3 bucket
+  QuickOpsS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        !Sub
+          - "quick-ops-bucket-${RandomGUID}"
+          - { RandomGUID: !Select [0, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId ]]]] }
+
   # Create a new VPC
   QuickOpsVPC:
     Type: "AWS::EC2::VPC"
@@ -143,7 +165,23 @@ Resources:
         - IpProtocol: "tcp"
           FromPort: 22
           ToPort: 22
-          CidrIp: "0.0.0.0/0"  # Allow SSH from anywhere (consider restricting this)
+          Description: "ssh"
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: "tcp"
+          FromPort: !Ref TelegramProxyPort
+          ToPort: !Ref TelegramProxyPort
+          Description: "mtg"
+          CidrIp: "0.0.0.0/0"   
+        - IpProtocol: "tcp"
+          FromPort: !Ref XrayPanelPort
+          ToPort: !Ref XrayPanelPort
+          Description: "x-ui"
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: "tcp"
+          FromPort: !Ref XrayClientPortFrom
+          ToPort: !Ref XrayClientPortTo
+          Description: "xray"
+          CidrIp: "0.0.0.0/0"
 
   # IAM Role for the Spot Instance
   QuickOpsSpotInstanceRole:
@@ -176,7 +214,30 @@ Resources:
                   - "ssm:GetParameters"
                 Resource: 
                   - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/manual/conf/*"  # Using !Sub for dynamic ARN
-
+        - PolicyName: "S3AccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                  - "s3:ListBucket"
+                Resource: 
+                  - !Sub "${QuickOpsS3Bucket.Arn}/*"
+                  - !Sub "${QuickOpsS3Bucket.Arn}"
+        - PolicyName: "AssociateEipWithEc2"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: 
+                  - "ec2:AssociateAddress"
+                Resource: 
+                  - "arn:aws:ec2:*:*:instance/*"
+                  - "arn:aws:ec2:*:*:elastic-ip/*"
+                  - "arn:aws:ec2:*:*:network-interface/*"
+  
   # Instance Profile that will associate the above IAM role with the EC2 instance
   QuickOpsSpotInstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
@@ -189,8 +250,8 @@ Resources:
     Type: "AWS::EC2::LaunchTemplate"
     Properties:
       LaunchTemplateData:
-        InstanceType: !Ref InstanceType  # Use the instance type parameter
-        KeyName: !Ref KeyName            # Use the key pair parameter
+        InstanceType: "t3.nano"
+        KeyName: !Ref KeyPairName            # Use the key pair parameter
         IamInstanceProfile:
           Arn: !GetAtt QuickOpsSpotInstanceProfile.Arn  # Attach the IAM role
         ImageId: !Sub "{{resolve:ssm:${LatestUbuntuAmi}}}"  # Use SSM parameter to fetch the specified Ubuntu AMI ID
@@ -206,11 +267,19 @@ Resources:
           Fn::Base64: !Sub |
             #!/bin/bash
             set -x
-            export working_dir=/ops/quick_ops
-            git clone ${GitRepoUrl} $working_dir
-            cd $working_dir
-            chmod +x ${BootstrapScript}
-            ./${BootstrapScript}
+            sudo apt-get update
+            sudo apt-get -y install awscli net-tools
+            ### export cfn parameters
+            export mtg_port=${TelegramProxyPort}
+            export mtg_secret=${TelegramProxySecret}
+            export eip_allocation_id=${ElasticIpAllocationId}
+            export s3_bucket_arn=${QuickOpsS3Bucket.Arn}
+            ### export directories
+            #### clone and script
+            export scripts_dir=/opt/scripts
+            git clone -b ${GitRepoBranch} ${GitRepoUrl} $scripts_dir
+            chmod +x -R $scripts_dir
+            source $scripts_dir/bootstrap.sh
 
   # Auto Scaling Group to manage the Spot Instances
   SpotInstanceAutoScalingGroup:
@@ -228,8 +297,12 @@ Resources:
           LaunchTemplateSpecification:
             LaunchTemplateId: !Ref QuickOpsSpotInstanceLaunchTemplate  # Reference the launch template
             Version: !GetAtt QuickOpsSpotInstanceLaunchTemplate.LatestVersionNumber  # Use the latest version of the Launch Template
+          Overrides:
+            - InstanceType: "t3.nano"
+            - InstanceType: "t3.micro" 
+            - InstanceType: "t3.medium" 
         InstancesDistribution:
           SpotAllocationStrategy: "lowest-price"  # Set allocation strategy to lowest price
           SpotMaxPrice: !Ref MaxSpotPrice  # Set the maximum price to match the parameter
-          SpotInstancePools: 2  # Number of Spot instance pools to use
+          SpotInstancePools: 9  # Number of Spot instance pools to use
           OnDemandPercentageAboveBaseCapacity: 0  # Only use Spot instances
