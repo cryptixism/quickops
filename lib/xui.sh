@@ -5,8 +5,8 @@ export arch="amd64"
 export xui_version="v2.4.4"
 
 mkdir -p $cert_dir
-cp $s3_dir/sib.ftp.sh.cer $cert_dir/
-cp $s3_dir/sib.ftp.sh.key $cert_dir/
+cp $s3_dir/${domain_name}.cer $cert_dir/
+cp $s3_dir/${domain_name}.key $cert_dir/
 
 # cp $scripts_dir/lib/xui.service /etc/systemd/system/x-ui.service
 
