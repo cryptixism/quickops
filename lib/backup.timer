@@ -1,0 +1,10 @@
+[Unit]
+Description=Run backup.service regularly
+Requires=backup.service
+
+[Timer]
+Unit=backup.service
+OnCalendar=minutely
+
+[Install]
+WantedBy=multi-user.target
