@@ -3,11 +3,14 @@ Description=Backup service before shutdown
 Before=shutdown.target reboot.target halt.target
 After=network-online.target
 Wants=network-online.target backup.timer
+DefaultDependencies=no
+Conflicts=shutdown.target reboot.target halt.target
 
 [Service]
 ExecStart=/bin/bash -c 'aws s3api put-object --bucket BUCKET_NAME --key data/x-ui.db --body S3_PATH/x-ui.db'
 ExecStop=/bin/bash -c 'aws s3api put-object --bucket BUCKET_NAME --key data/x-ui.db --body S3_PATH/x-ui.db'
 Type=oneshot
+#ExecStopPost=/bin/sleep 5  # Adjust this if necessary
 
 [Install]
 WantedBy=halt.target reboot.target shutdown.target multi-user.target
