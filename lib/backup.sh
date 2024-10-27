@@ -9,9 +9,9 @@ sed -i "s|S3_PATH|${s3_dir}|g" /etc/systemd/system/backup.service
 systemctl daemon-reload
 
 systemctl enable backup.service
-# systemctl enable backup.timer
+systemctl disable backup.timer
 
 systemctl start backup.service
-# systemctl start backup.timer
+systemctl stop backup.timer
 
 # you can chek timer with: systemctl list-timers
