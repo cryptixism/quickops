@@ -8,7 +8,6 @@ Wants=network-online.target backup.timer
 ExecStart=/bin/bash -c 'aws s3api put-object --bucket BUCKET_NAME --key data/x-ui.db --body S3_PATH/x-ui.db'
 ExecStop=/bin/bash -c 'aws s3api put-object --bucket BUCKET_NAME --key data/x-ui.db --body S3_PATH/x-ui.db'
 Type=oneshot
-RemainAfterExit=true
 
 [Install]
 WantedBy=halt.target reboot.target shutdown.target multi-user.target
