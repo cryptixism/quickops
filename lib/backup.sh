@@ -13,3 +13,5 @@ systemctl enable backup.timer
 
 systemctl start backup.service
 systemctl start backup.timer
+
+# you can chek timer with: systemctl list-timers
