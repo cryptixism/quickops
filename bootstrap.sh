@@ -17,7 +17,7 @@ source $scripts_dir/lib/xui.sh
 ## https://github.com/9seconds/mtg
 source $scripts_dir/lib/mtg.sh
 
-## lookout for interuptions
+## lookout for interuptions and scale-in events
 # source $scripts_dir/lib/notice.sh
 
 ## backup service that trigger for interuptions, scale-in events, and terminations
