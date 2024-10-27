@@ -4,6 +4,10 @@ export cert_dir="/opt/certs"
 export arch="amd64"
 export xui_version="v2.4.4"
 
+if [ ${domain_name} == "None" ]; then
+  echo "Error: domain name is not provided."
+fi
+
 mkdir -p $cert_dir
 cp $s3_dir/${domain_name}.cer $cert_dir/
 cp $s3_dir/${domain_name}.key $cert_dir/
