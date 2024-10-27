@@ -18,4 +18,7 @@ source $scripts_dir/lib/xui.sh
 source $scripts_dir/lib/mtg.sh
 
 ## lookout for interuptions
-source $scripts_dir/lib/notice.sh
+# source $scripts_dir/lib/notice.sh
+
+## backup service that trigger for interuptions, scale-in events, and terminations
+source $scripts_dir/lib/backup.sh

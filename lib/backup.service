@@ -1,0 +1,15 @@
+[Unit]
+Description=Timer unit for backup.service
+After=network.target
+Before=shutdown.target
+
+[Timer]
+Unit=backup.service
+OnCalendar=minutely
+
+[Install]
+WantedBy=multi-user.target halt.target reboot.target shutdown.target
+
+[Service]
+ExecStart=/bin/bash -c 'aws s3api put-object --bucket BUCKET_NAME --key data/x-ui.db --body S3_PATH/x-ui.db'
+Type=oneshot
