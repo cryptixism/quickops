@@ -10,8 +10,8 @@ Parameters:
 
   AfraidUpdateKey:
     Type: String
-    Description: "The free dns domain name"
-    Default: "NOnEDGJWXlVoZqBFd1D2QzBrRTE2MjMzOTt4MaE_"
+    Description: "The free dns domain name. Only the key from Dynamic DNS Direct URL."
+    Default: "None"
 
   TelegramProxySecret:
     Type: String
