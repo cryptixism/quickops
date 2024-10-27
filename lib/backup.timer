@@ -4,7 +4,7 @@ Requires=backup.service
 
 [Timer]
 Unit=backup.service
-OnCalendar=minutely
+OnCalendar=hourly
 
 [Install]
 WantedBy=multi-user.target
