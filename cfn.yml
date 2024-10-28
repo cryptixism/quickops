@@ -8,6 +8,16 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: "Key pair to access the instance."
 
+  DomainName:
+    Type: String
+    Description: "The domain name."
+    Default: "None"
+
+  AfraidUpdateKey:
+    Type: String
+    Description: "The free dns domain name. Only the key from Dynamic DNS Direct URL."
+    Default: "None"
+
   TelegramProxySecret:
     Type: String
     Description: "32 Hex Chars for Telegram Proxy Secret."
@@ -273,6 +283,8 @@ Resources:
             export mtg_port=${TelegramProxyPort}
             export mtg_secret=${TelegramProxySecret}
             export eip_allocation_id=${ElasticIpAllocationId}
+            export afraid_update_key=${AfraidUpdateKey}
+            export domain_name=${DomainName}
             export s3_bucket_arn=${QuickOpsS3Bucket.Arn}
             ### export directories
             #### clone and script
