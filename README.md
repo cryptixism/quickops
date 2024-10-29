@@ -25,11 +25,4 @@ aws cloudformation deploy --template-file /path/to/cfn.yml --stack-name name-of-
   --parameter-overrides TelegramProxySecret='ABCDEF00000000000000000987654321' \
   --parameter-overrides MaxSpotPrice='0.005'
 ```
-
-## To Do
-1- confirm termination and interruptions backup settings
-2- if eip allocation id is not provided, update dns 
-3- add whatsapp proxy
-4- containerize  
-5- haproxy as gateway
-6- ...
+ 
