@@ -77,6 +77,8 @@ Resources:
         !Sub
           - "quick-ops-bucket-${RandomGUID}"
           - { RandomGUID: !Select [0, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId ]]]] }
+      VersioningConfiguration:
+        Status: Enabled
 
   # Create a new VPC
   QuickOpsVPC:
