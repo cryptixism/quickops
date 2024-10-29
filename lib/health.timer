@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Port Health Check Service every 5 minutes
+
+[Timer]
+OnBootSec=5min #minutes after boot
+OnUnitActiveSec=5min #every 5 minutes
+Unit=health.service
+
+[Install]
+WantedBy=timers.target
