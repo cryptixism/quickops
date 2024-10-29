@@ -2,7 +2,7 @@
 
 cp $scripts_dir/lib/health.service /etc/systemd/system/health.service
 cp $scripts_dir/lib/health.timer /etc/systemd/system/health.timer
-cp $scripts_dir/lib/health_check.sh /usr/local/bin/health_check.sh
+cp $scripts_dir/lib/health.sh /usr/local/bin/health.sh
 
 systemctl daemon-reload
 

@@ -3,4 +3,4 @@ Description=Port Health Check Service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/health_check.sh
+ExecStart=/usr/local/bin/health.sh
