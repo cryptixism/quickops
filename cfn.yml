@@ -282,6 +282,8 @@ Resources:
             sudo apt-get update
             sudo apt-get -y install awscli net-tools
             ### parameters ###
+            echo "export xray_port=${XrayClientPortFrom}" >> /env
+            echo "export xui_port=${XrayPanelPort}" >> /env
             echo "export mtg_port=${TelegramProxyPort}" >> /env
             echo "export mtg_secret=${TelegramProxySecret}" >> /env
             echo "export eip_allocation_id=${ElasticIpAllocationId}" >> /env
