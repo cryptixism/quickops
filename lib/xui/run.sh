@@ -1,5 +1,10 @@
 #!/bin/bash 
 
+aws s3api get-object --bucket "$s3_bucket_name" --key "data/${domain_name}.cer" "$s3_dir/${domain_name}.cer"
+aws s3api get-object --bucket "$s3_bucket_name" --key "data/${domain_name}.key" "$s3_dir/${domain_name}.key"
+# aws s3api get-object --bucket "$s3_bucket_name" --key "data/x-ui.db" "$s3_dir/x-ui.db"
+source $scripts_dir/lib/xui/db.sh
+
 export cert_dir="/opt/certs"
 export arch="amd64"
 export xui_version="v2.4.4"
@@ -12,7 +17,7 @@ mkdir -p $cert_dir
 cp $s3_dir/${domain_name}.cer $cert_dir/
 cp $s3_dir/${domain_name}.key $cert_dir/
 
-# cp $scripts_dir/lib/xui.service /etc/systemd/system/x-ui.service
+# cp $scripts_dir/lib/xui/xui.service /etc/systemd/system/x-ui.service
 
 mkdir -p /etc/x-ui
 cp $s3_dir/x-ui.db /etc/x-ui/x-ui.db

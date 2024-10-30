@@ -233,8 +233,10 @@ Resources:
               - Effect: Allow
                 Action:
                   - "s3:GetObject"
+                  - "s3:GetObjectVersion"
                   - "s3:PutObject"
                   - "s3:ListBucket"
+                  - "s3:ListBucketVersions"
                 Resource: 
                   - !Sub "${QuickOpsS3Bucket.Arn}/*"
                   - !Sub "${QuickOpsS3Bucket.Arn}"
@@ -281,16 +283,18 @@ Resources:
             set -x
             sudo apt-get update
             sudo apt-get -y install awscli net-tools
-            ### export cfn parameters
-            export mtg_port=${TelegramProxyPort}
-            export mtg_secret=${TelegramProxySecret}
-            export eip_allocation_id=${ElasticIpAllocationId}
-            export afraid_update_key=${AfraidUpdateKey}
-            export domain_name=${DomainName}
-            export s3_bucket_arn=${QuickOpsS3Bucket.Arn}
-            ### export directories
-            #### clone and script
-            export scripts_dir=/opt/scripts
+            ### parameters ###
+            echo "export xray_port=${XrayClientPortFrom}" >> /env
+            echo "export xui_port=${XrayPanelPort}" >> /env
+            echo "export mtg_port=${TelegramProxyPort}" >> /env
+            echo "export mtg_secret=${TelegramProxySecret}" >> /env
+            echo "export eip_allocation_id=${ElasticIpAllocationId}" >> /env
+            echo "export afraid_update_key=${AfraidUpdateKey}" >> /env
+            echo "export domain_name=${DomainName}" >> /env
+            echo "export s3_bucket_arn=${QuickOpsS3Bucket.Arn}" >> /env
+            echo "export scripts_dir=/opt/scripts" >> /env
+            ### prepare ###
+            source /env
             git clone -b ${GitRepoBranch} ${GitRepoUrl} $scripts_dir
             chmod +x -R $scripts_dir
             source $scripts_dir/bootstrap.sh
