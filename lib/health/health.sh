@@ -13,5 +13,5 @@ fi
 
 if ! check_port $xui_port || ! check_port $xray_port; then
     echo "One of the xui or xray ports is closed or unreachable. Restarting xui service..."
-    sudo systemctl restart xui
+    sudo systemctl restart x-ui
 fi
