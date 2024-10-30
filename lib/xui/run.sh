@@ -2,8 +2,8 @@
 
 aws s3api get-object --bucket "$s3_bucket_name" --key "data/${domain_name}.cer" "$s3_dir/${domain_name}.cer"
 aws s3api get-object --bucket "$s3_bucket_name" --key "data/${domain_name}.key" "$s3_dir/${domain_name}.key"
-aws s3api get-object --bucket "$s3_bucket_name" --key "data/x-ui.db" "$s3_dir/x-ui.db"
-# source $scripts_dir/lib/xui/db.sh
+# aws s3api get-object --bucket "$s3_bucket_name" --key "data/x-ui.db" "$s3_dir/x-ui.db"
+source $scripts_dir/lib/xui/db.sh
 
 export cert_dir="/opt/certs"
 export arch="amd64"

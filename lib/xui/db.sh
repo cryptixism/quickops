@@ -2,8 +2,8 @@
 
 db_object_key="data/x-ui.db"
 db_local_file="$s3_dir/x-ui.db"
-wait_time=60 # 1 minute
-object_creation_time_delta=$((10 * 60)) # 10 minutes in seconds
+wait_time=60 # seconds
+object_creation_time_delta=$((10 * 60)) # seconds
 
 # Function to get the latest version information
 get_latest_version_info() {
@@ -26,10 +26,9 @@ is_version_recent() {
 
 download_this_version() {
     local version_id=$1
-    echo "The latest version was created within the last 10 minutes."
     aws s3api get-object --bucket "$s3_bucket_name" --key "$db_object_key" \
         --version-id "$version_id" "$db_local_file"
-    echo "Downloaded the latest version to $db_local_file"
+    echo "Downloaded the latest available version to $db_local_file"
     exit 0
 }
 
@@ -48,7 +47,7 @@ echo "Attempt 1 - Latest version ID: $latest_version_id, Last modified: $last_mo
 if is_version_recent "$last_modified"; then download_this_version "$latest_version_id"; fi
 
 # Wait 1 minute
-echo "The latest version is older than 10 minutes. Waiting for 1 minute..."
+echo "The latest version is older than $((object_creation_time_delta / 60)) minutes. Waiting for $wait_time seconds ..."
 sleep $wait_time
 
 # Attempt 2: Second check
@@ -60,7 +59,7 @@ echo "Attempt 2 - Latest version ID: $latest_version_id, Last modified: $last_mo
 if is_version_recent "$last_modified"; then download_this_version "$latest_version_id"; fi
 
 # Wait 1 minute again
-echo "The latest version is still older than 10 minutes. Waiting for 1 more minute..."
+echo "The latest version is still older than 10 minutes. Waiting for $wait_time more seconds..."
 sleep $wait_time
 
 # Attempt 3: Final check
@@ -71,7 +70,7 @@ last_modified=$(echo "$version_info" | jq -r '.LastModified')
 echo "Attempt 3 - Latest version ID: $latest_version_id, Last modified: $last_modified"
 
 if is_version_recent "$last_modified"; then
-    echo "The latest version was created within the last 10 minutes."
+    echo "The latest version was created within the last $((object_creation_time_delta / 60)) minutes."
 else
     echo "No recent version found. Downloading the last available version."
 fi
