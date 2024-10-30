@@ -6,10 +6,10 @@ cp $scripts_dir/lib/health/health.sh /usr/local/bin/health.sh
 
 systemctl daemon-reload
 
-systemctl enable backup.service
-systemctl enable backup.timer
+systemctl enable health.service
+systemctl enable health.timer
 
-systemctl start backup.service
-systemctl start backup.timer
+systemctl start health.service
+systemctl start health.timer
 
 systemctl list-timers
