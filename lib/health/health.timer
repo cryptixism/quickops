@@ -2,8 +2,8 @@
 Description=Run Port Health Check Service every 5 minutes
 
 [Timer]
-OnBootSec=5min #minutes after boot
-OnUnitActiveSec=5min #every 5 minutes
+OnBootSec=5min
+OnUnitActiveSec=5min
 Unit=health.service
 
 [Install]
