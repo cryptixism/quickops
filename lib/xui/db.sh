@@ -24,55 +24,45 @@ is_version_recent() {
     [[ $time_diff -le $object_creation_time_delta ]]
 }
 
+# Function to download the latest version
 download_this_version() {
     local version_id=$1
     aws s3api get-object --bucket "$s3_bucket_name" --key "$db_object_key" \
         --version-id "$version_id" "$db_local_file"
-    echo "Downloaded the latest available version to $db_local_file"
-    exit 0
+    echo "Downloaded the version with ID $version_id to $db_local_file"
 }
 
-# Attempt 1: Initial check
-version_info=$(get_latest_version_info)
-if [[ $? -ne 0 || -z "$version_info" ]]; then
-    echo "Failed to retrieve version info or no versions found."
-    exit 1
-fi
+# Attempt to find a recent version up to 3 times
+for attempt in {1..3}; do
+    # Fetch the latest version info
+    version_info=$(get_latest_version_info)
+    if [[ $? -ne 0 || -z "$version_info" ]]; then
+        echo "Failed to retrieve version info or no versions found."
+        break
+    fi
 
-# Extract version ID and last modified time
-latest_version_id=$(echo "$version_info" | jq -r '.VersionId')
-last_modified=$(echo "$version_info" | jq -r '.LastModified')
+    # Extract version ID and last modified time
+    latest_version_id=$(echo "$version_info" | jq -r '.VersionId')
+    last_modified=$(echo "$version_info" | jq -r '.LastModified')
 
-echo "Attempt 1 - Latest version ID: $latest_version_id, Last modified: $last_modified"
-if is_version_recent "$last_modified"; then download_this_version "$latest_version_id"; fi
+    echo "Attempt $attempt: Latest version ID: $latest_version_id, Last modified: $last_modified"
 
-# Wait 1 minute
-echo "The latest version is older than $((object_creation_time_delta / 60)) minutes. Waiting for $wait_time seconds ..."
-sleep $wait_time
+    # Check if the latest version was created in the last 10 minutes
+    if is_version_recent "$last_modified"; then
+        echo "The latest version was created within the last $((object_creation_time_delta / 60)) minutes."
+        download_this_version "$latest_version_id"
+        break
+    else
+        echo "The latest version is older than $((object_creation_time_delta / 60)) minutes."
+        # On the third attempt, download the latest version anyway
+        if [[ $attempt -eq 3 ]]; then
+            echo "No recent version found after 3 attempts. Downloading the last available version."
+            download_this_version "$latest_version_id"
+        else
+            echo "Waiting for $wait_time more seconds before retrying..."
+            sleep $wait_time
+        fi
+    fi
+done
 
-# Attempt 2: Second check
-version_info=$(get_latest_version_info)
-latest_version_id=$(echo "$version_info" | jq -r '.VersionId')
-last_modified=$(echo "$version_info" | jq -r '.LastModified')
-
-echo "Attempt 2 - Latest version ID: $latest_version_id, Last modified: $last_modified"
-if is_version_recent "$last_modified"; then download_this_version "$latest_version_id"; fi
-
-# Wait 1 minute again
-echo "The latest version is still older than 10 minutes. Waiting for $wait_time more seconds..."
-sleep $wait_time
-
-# Attempt 3: Final check
-version_info=$(get_latest_version_info)
-latest_version_id=$(echo "$version_info" | jq -r '.VersionId')
-last_modified=$(echo "$version_info" | jq -r '.LastModified')
-
-echo "Attempt 3 - Latest version ID: $latest_version_id, Last modified: $last_modified"
-
-if is_version_recent "$last_modified"; then
-    echo "The latest version was created within the last $((object_creation_time_delta / 60)) minutes."
-else
-    echo "No recent version found. Downloading the last available version."
-fi
-
-download_this_version "$latest_version_id"
+echo "Database download completed."
