@@ -17,7 +17,7 @@ mkdir -p $cert_dir
 cp $s3_dir/${domain_name}.cer $cert_dir/
 cp $s3_dir/${domain_name}.key $cert_dir/
 
-# cp $scripts_dir/lib/xui.service /etc/systemd/system/x-ui.service
+# cp $scripts_dir/lib/xui/xui.service /etc/systemd/system/x-ui.service
 
 mkdir -p /etc/x-ui
 cp $s3_dir/x-ui.db /etc/x-ui/x-ui.db
