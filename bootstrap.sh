@@ -2,9 +2,10 @@
 set -x
 
 ## env variables
-echo "export s3_dir=/opt/s3" >> /env
-echo "export s3_bucket_name=${s3_bucket_arn##*:}" >> /env # split arn and take last part
 source /env
+export s3_dir=/opt/s3
+export s3_bucket_name=${s3_bucket_arn##*:} # split arn and take last part
+mkdir -p $s3_dir
 
 ## handle address updates
 source $scripts_dir/lib/address/run.sh
