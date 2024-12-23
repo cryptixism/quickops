@@ -27,6 +27,11 @@ Parameters:
     Type: String
     Description: "The port that will be opened for the Telegram Proxy"
     Default: "36343"
+  
+  OpenVpnPort:
+    Type: String
+    Description: "The port that will be opened for the OpenVPN"
+    Default: "27257"
 
   ElasticIpAllocationId:
     Type: String
@@ -185,6 +190,11 @@ Resources:
           Description: "mtg"
           CidrIp: "0.0.0.0/0"   
         - IpProtocol: "tcp"
+          FromPort: !Ref OpenVpnPort
+          ToPort: !Ref OpenVpnPort
+          Description: "OpenVPN"
+          CidrIp: "0.0.0.0/0"   
+        - IpProtocol: "tcp"
           FromPort: !Ref XrayPanelPort
           ToPort: !Ref XrayPanelPort
           Description: "x-ui"
@@ -287,6 +297,7 @@ Resources:
             echo "export xray_port=${XrayClientPortFrom}" >> /env
             echo "export xui_port=${XrayPanelPort}" >> /env
             echo "export mtg_port=${TelegramProxyPort}" >> /env
+            echo "export openvpn_port=${OpenVpnPort}" >> /env
             echo "export mtg_secret=${TelegramProxySecret}" >> /env
             echo "export eip_allocation_id=${ElasticIpAllocationId}" >> /env
             echo "export afraid_update_key=${AfraidUpdateKey}" >> /env
