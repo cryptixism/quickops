@@ -8,16 +8,18 @@ echo "user1:${OPENVPN_USER1_PASSWORD}" | sudo chpasswd
 # Set variables
 EASYRSA_DIR="/etc/openvpn/easy-rsa"
 KEY_DIR="$EASYRSA_DIR/keys"
+CLIENT_DIR="/etc/openvpn/ccd"
 USER="user1"
-CLIENT_CONFIG="/etc/openvpn/ccd/${USER}.ovpn"
+CLIENT_CONFIG="${CLIENT_DIR}/${USER}.ovpn"
 SERVER_CONFIG="/etc/openvpn/server.conf"
+
+# Configure easy-rsa
+make-cadir $EASYRSA_DIR
+mkdir -p $KEY_DIR $CLIENT_DIR
 
 cp $scripts_dir/lib/openvpn/client.ovpn $CLIENT_CONFIG
 cp $scripts_dir/lib/openvpn/server.conf $SERVER_CONFIG
 
-# Configure easy-rsa
-make-cadir $EASYRSA_DIR
-mkdir -p $KEY_DIR
 cd $EASYRSA_DIR
 ./easyrsa init-pki
 echo -e "yes\n" | ./easyrsa build-ca nopass
