@@ -12,8 +12,8 @@ USER="user1"
 CLIENT_CONFIG="/etc/openvpn/ccd/${USER}.ovpn"
 SERVER_CONFIG="/etc/openvpn/server.conf"
 
-cp client.ovpn $CLIENT_CONFIG
-cp server.conf $SERVER_CONFIG
+cp $scripts_dir/lib/openvpn/client.ovpn $CLIENT_CONFIG
+cp $scripts_dir/lib/openvpn/server.conf $SERVER_CONFIG
 
 # Configure easy-rsa
 make-cadir $EASYRSA_DIR
