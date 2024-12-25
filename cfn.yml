@@ -193,7 +193,7 @@ Resources:
           ToPort: !Ref TelegramProxyPort
           Description: "mtg"
           CidrIp: "0.0.0.0/0"   
-        - IpProtocol: "tcp"
+        - IpProtocol: "udp"
           FromPort: !Ref OpenVpnPort
           ToPort: !Ref OpenVpnPort
           Description: "OpenVPN"
