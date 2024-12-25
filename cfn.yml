@@ -8,6 +8,10 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: "Key pair to access the instance."
 
+  OpenvpnUser1Password:
+    Type: String
+    Description: "The password for the user1 in OpenVPN"
+
   DomainName:
     Type: String
     Description: "The domain name."
@@ -302,6 +306,7 @@ Resources:
             echo "export eip_allocation_id=${ElasticIpAllocationId}" >> /env
             echo "export afraid_update_key=${AfraidUpdateKey}" >> /env
             echo "export domain_name=${DomainName}" >> /env
+            echo "export openvpn_user1_password='${OpenvpnUser1Password}'" >> /env
             echo "export s3_bucket_arn=${QuickOpsS3Bucket.Arn}" >> /env
             echo "export scripts_dir=/opt/scripts" >> /env
             ### prepare ###
