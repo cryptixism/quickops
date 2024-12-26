@@ -45,3 +45,6 @@ echo -e "\nCLient config:\n" && cat $CLIENT_CONFIG
 # Start OpenVPN service
 systemctl start openvpn@server
 systemctl enable openvpn@server
+
+# troubleshoot
+# journalctl -u openvpn@server -f
