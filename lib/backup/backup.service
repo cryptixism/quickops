@@ -6,7 +6,7 @@ After=network-online.target
 [Service]
 Type=oneshot
 RemainAfterExit=true
-ExecStop=/bin/bash -c 'aws s3api put-object --bucket BUCKET_NAME --key data/x-ui.db --body /etc/x-ui/x-ui.db'
+ExecStop=/bin/bash -c 'aws s3api put-object --bucket BUCKET_NAME --key data/xui/x-ui.db --body /etc/x-ui/x-ui.db'
 
 [Install]
 WantedBy=multi-user.target

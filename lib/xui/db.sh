@@ -1,6 +1,6 @@
 #!/bin/bash
 
-db_object_key="data/x-ui.db"
+db_object_key="data/xui/x-ui.db"
 db_local_file="$s3_dir/x-ui.db"
 wait_time=60 # seconds
 object_creation_time_delta=$((10 * 60)) # seconds

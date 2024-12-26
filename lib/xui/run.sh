@@ -1,7 +1,7 @@
 #!/bin/bash 
 
-aws s3api get-object --bucket "$s3_bucket_name" --key "data/${domain_name}.cer" "$s3_dir/${domain_name}.cer"
-aws s3api get-object --bucket "$s3_bucket_name" --key "data/${domain_name}.key" "$s3_dir/${domain_name}.key"
+aws s3api get-object --bucket "$s3_bucket_name" --key "data/xui/${domain_name}.cer" "$s3_dir/${domain_name}.cer"
+aws s3api get-object --bucket "$s3_bucket_name" --key "data/xui/${domain_name}.key" "$s3_dir/${domain_name}.key"
 source $scripts_dir/lib/xui/db.sh
 
 export cert_dir="/opt/certs"
