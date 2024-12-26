@@ -20,6 +20,7 @@ mkdir -p $KEY_DIR $CLIENT_DIR
 ## Certificates
 cp $scripts_dir/lib/openvpn/client.ovpn $CLIENT_CONFIG
 cp $scripts_dir/lib/openvpn/server.conf $SERVER_CONFIG
+cp $scripts_dir/lib/openvpn/openvpn.tls /etc/openvpn/ta.key
 cp $s3_dir/${domain_name}.cer /etc/openvpn/server.cer
 cp $s3_dir/${domain_name}.key /etc/openvpn/server.key
 

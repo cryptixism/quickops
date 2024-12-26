@@ -1,20 +1,6 @@
-client
-dev tun
-proto udp4
-remote SERVER_ADDRESS SERVER_PORT
-resolv-retry infinite
-nobind
-persist-key
-persist-tun
-auth-user-pass
-cipher AES-256-CBC
-verb 3
-compress
-tls-auth inline 1
-<ca>
-CA_CONTENT
-</ca>
-<tls-auth>
+#
+# 2048 bit OpenVPN static key
+#
 -----BEGIN OpenVPN Static key V1-----
 fef6808e30a60c67e8a557873bb16216
 9892afef5de5dc6cf3fa488feab0256f
@@ -33,4 +19,3 @@ d239bc96407f9c9519b0e5fec9497163
 100f90176dd2b14a09075b2d393b27a6
 1dcd2cff787a71b40034ddfdfb7a7bd1
 -----END OpenVPN Static key V1-----
-</tls-auth>
