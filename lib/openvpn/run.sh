@@ -19,7 +19,7 @@ aws s3api get-object --bucket "$s3_bucket_name" --key data/openvpn/ca.crt $OPENV
 aws s3api get-object --bucket "$s3_bucket_name" --key data/openvpn/dh.pem $OPENVPN_DIR/dh.pem
 aws s3api get-object --bucket "$s3_bucket_name" --key data/openvpn/server.crt $OPENVPN_DIR/server.crt
 aws s3api get-object --bucket "$s3_bucket_name" --key data/openvpn/server.key $OPENVPN_DIR/server.key
-aws s3api get-object --bucket "$s3_bucket_name" --key data/openvpn/ta.key $OPENVPN_DIR/ta.key
+# aws s3api get-object --bucket "$s3_bucket_name" --key data/openvpn/ta.key $OPENVPN_DIR/ta.key
 
 ## Replace variables in configs
 sed -i -e "s/SERVER_PORT/${openvpn_port}/g" $SERVER_CONFIG
