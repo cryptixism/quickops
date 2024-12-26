@@ -36,9 +36,9 @@ cd $EASYRSA_DIR
 cp $EASYRSA_DIR/pki/dh.pem /etc/openvpn/
 
 # Replace variables in client config
-sed -i -e "s/SERVER_ADDRESS/${domain_name}/g" $CLIENT_CONFIG
-sed -i -e "s/SERVER_PORT/${openvpn_port}/g" $CLIENT_CONFIG
-sed -i -e "s/CA_CONTENT/${ca_cert}/g" $CLIENT_CONFIG
+sed -i -e "s|SERVER_ADDRESS|${domain_name}|g" $CLIENT_CONFIG
+sed -i -e "s|SERVER_PORT|${openvpn_port}|g" $CLIENT_CONFIG
+sed -i -e "s|CA_CONTENT|${ca_cert}|g" $CLIENT_CONFIG
 sed -i -e "s|SERVER_PORT|${openvpn_port}|g" $SERVER_CONFIG
 echo -e "\nCLient config:\n" && cat $CLIENT_CONFIG
 
