@@ -43,3 +43,8 @@ systemctl enable openvpn@server
 
 # troubleshoot
 # journalctl -u openvpn@server -f
+# tcpdump -i tun0 host 104.26.9.59 -vv
+# tcpdump -i tun0 icmp -vv
+# ip route show
+# route -n
+# iptables -t nat -A POSTROUTING -s 10.20.0.0/24 -o ens5 -j MASQUERADE
