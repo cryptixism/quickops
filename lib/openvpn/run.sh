@@ -4,6 +4,7 @@
 apt install -y openvpn 
 useradd user1
 echo "user1:${openvpn_user1_password}" | sudo chpasswd
+echo 1 > /proc/sys/net/ipv4/ip_forward
 
 ## Set variables
 OPENVPN_DIR="/etc/openvpn/"
@@ -28,7 +29,7 @@ sed -i -e "s/SERVER_PORT/${openvpn_port}/g" $CLIENT_CONFIG
 
 ## Add CA certificate to client config
 echo -e "<ca>\n" >> $CLIENT_CONFIG
-cat ca.crt >> $CLIENT_CONFIG
+cat $OPENVPN_DIR/ca.crt >> $CLIENT_CONFIG
 echo -e "</ca>\n" >> $CLIENT_CONFIG
 
 # Start OpenVPN service
