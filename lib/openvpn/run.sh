@@ -38,7 +38,7 @@ echo -e "</ca>\n" >> $CLIENT_CONFIG
 ## Add TLS Auth to client config
 echo -e "<tls-auth>\n" >> $CLIENT_CONFIG
 cat $OPENVPN_DIR/ta.key >> $CLIENT_CONFIG
-echo -e "</tls-auth>\n" >> $CLIENT_CONFIG
+echo -e "\n</tls-auth>\n" >> $CLIENT_CONFIG
 
 # Start OpenVPN service
 systemctl start openvpn@server
