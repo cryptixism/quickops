@@ -261,6 +261,7 @@ Resources:
               - Effect: "Allow"
                 Action: 
                   - "ec2:AssociateAddress"
+                  - "ec2:ModifyInstanceAttribute"
                 Resource: 
                   - "arn:aws:ec2:*:*:instance/*"
                   - "arn:aws:ec2:*:*:elastic-ip/*"
