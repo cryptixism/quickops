@@ -8,7 +8,7 @@ echo 1 > /proc/sys/net/ipv4/ip_forward
 
 ## Set variables
 OPENVPN_DIR="/etc/openvpn/"
-CLIENT_CONFIG="$OPENVPN_DIR/user1.ovpn"
+CLIENT_CONFIG="$OPENVPN_DIR/ccd/user1.ovpn"
 SERVER_CONFIG="$OPENVPN_DIR/server.conf"
 
 ## Copy configs

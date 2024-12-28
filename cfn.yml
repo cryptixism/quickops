@@ -278,7 +278,6 @@ Resources:
     Type: "AWS::EC2::LaunchTemplate"
     Properties:
       LaunchTemplateData:
-        InstanceType: "t3.nano"
         KeyName: !Ref KeyPairName            # Use the key pair parameter
         IamInstanceProfile:
           Arn: !GetAtt QuickOpsSpotInstanceProfile.Arn  # Attach the IAM role
@@ -332,7 +331,6 @@ Resources:
             LaunchTemplateId: !Ref QuickOpsSpotInstanceLaunchTemplate  # Reference the launch template
             Version: !GetAtt QuickOpsSpotInstanceLaunchTemplate.LatestVersionNumber  # Use the latest version of the Launch Template
           Overrides:
-            - InstanceType: "t3.nano"
             - InstanceType: "t3.micro" 
             - InstanceType: "t3.medium" 
         InstancesDistribution:
