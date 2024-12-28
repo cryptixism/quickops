@@ -1,4 +1,4 @@
-# QuickOpsStack
+# OpenVpnStack
 
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Template to create a Spot EC2 instance on Ubuntu with automated replacement and bootstrap scripts from a Git repo.
@@ -22,55 +22,10 @@ Parameters:
     Description: "The free dns domain name. Only the key from Dynamic DNS Direct URL."
     Default: "None"
 
-  TelegramProxySecret:
-    Type: String
-    Description: "32 Hex Chars for Telegram Proxy Secret."
-    Default: "ABCDEF00000000000000000987654321"
-  
-  TelegramProxyPort:
-    Type: String
-    Description: "The port that will be opened for the Telegram Proxy"
-    Default: "36343"
-  
-  OpenVpnPort:
-    Type: String
-    Description: "The port that will be opened for the OpenVPN"
-    Default: "27257"
-
-  ElasticIpAllocationId:
-    Type: String
-    Description: "The Allocation ID of the EIP you like to be used. If not provided, no EIP will be used and IP will change often."
-    Default: "None"
-
-  GitRepoUrl:
-    Type: String
-    Description: "URL of the Git repository to clone."
-    Default: "https://github.com/cryptixism/quickops.git"
-
-  GitRepoBranch:
-    Type: String
-    Description: "The branch to clone."
-    Default: "main"
-
   MaxSpotPrice:
     Type: String
     Description: "The maximum price you're willing to pay for the Spot Instance per hour. This may affect availability of the service."
     Default: "0.004"  # Default is minimum spot price for t3.micro
-
-  XrayPanelPort:
-    Type: String
-    Description: "The port that will be opened for the xray panel (x-ui)"
-    Default: "48348"
-
-  XrayClientPortFrom:
-    Type: String
-    Description: "The port that will be opened for the xray client"
-    Default: "51000"
-
-  XrayClientPortTo:
-    Type: String
-    Description: "The port that will be opened for the xray client"
-    Default: "59000"
 
   LatestUbuntuAmi:
     Type: String
@@ -79,64 +34,64 @@ Parameters:
 
 Resources:
   # S3 bucket
-  QuickOpsS3Bucket:
+  OpenVpnS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName:
         !Sub
-          - "quick-ops-bucket-${RandomGUID}"
+          - "openvpn-bucket-${RandomGUID}"
           - { RandomGUID: !Select [0, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId ]]]] }
       VersioningConfiguration:
         Status: Enabled
 
   # Create a new VPC
-  QuickOpsVPC:
+  OpenVpnVPC:
     Type: "AWS::EC2::VPC"
     Properties:
-      CidrBlock: "10.0.0.0/16"  # CIDR block for the VPC
+      CidrBlock: "10.50.0.0/16"  # CIDR block for the VPC
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
         - Key: "Name"
-          Value: "QuickOpsVPC"
+          Value: "OpenVpnVPC"
 
   # Create an Internet Gateway
-  QuickOpsInternetGateway:
+  OpenVpnInternetGateway:
     Type: "AWS::EC2::InternetGateway"
     Properties:
       Tags:
         - Key: "Name"
-          Value: "QuickOpsInternetGateway"
+          Value: "OpenVpnInternetGateway"
 
   # Attach the Internet Gateway to the VPC
   InternetGatewayAttachment:
     Type: "AWS::EC2::VPCGatewayAttachment"
     Properties:
-      VpcId: !Ref QuickOpsVPC
-      InternetGatewayId: !Ref QuickOpsInternetGateway
+      VpcId: !Ref OpenVpnVPC
+      InternetGatewayId: !Ref OpenVpnInternetGateway
 
   # Create 3 public subnets in different availability zones
   PublicSubnet1:
     Type: "AWS::EC2::Subnet"
     Properties:
-      VpcId: !Ref QuickOpsVPC
-      CidrBlock: "10.0.1.0/24"  # First public subnet CIDR block
+      VpcId: !Ref OpenVpnVPC
+      CidrBlock: "10.50.1.0/24"  # First public subnet CIDR block
       AvailabilityZone: !Select [0, !GetAZs '']  # First AZ
       MapPublicIpOnLaunch: true  # Automatically assign public IPs
 
   PublicSubnet2:
     Type: "AWS::EC2::Subnet"
     Properties:
-      VpcId: !Ref QuickOpsVPC
-      CidrBlock: "10.0.2.0/24"  # Second public subnet CIDR block
+      VpcId: !Ref OpenVpnVPC
+      CidrBlock: "10.50.2.0/24"  # Second public subnet CIDR block
       AvailabilityZone: !Select [1, !GetAZs '']  # Second AZ
       MapPublicIpOnLaunch: true  # Automatically assign public IPs
 
   PublicSubnet3:
     Type: "AWS::EC2::Subnet"
     Properties:
-      VpcId: !Ref QuickOpsVPC
-      CidrBlock: "10.0.3.0/24"  # Third public subnet CIDR block
+      VpcId: !Ref OpenVpnVPC
+      CidrBlock: "10.50.3.0/24"  # Third public subnet CIDR block
       AvailabilityZone: !Select [2, !GetAZs '']  # Third AZ
       MapPublicIpOnLaunch: true  # Automatically assign public IPs
 
@@ -144,7 +99,7 @@ Resources:
   PublicRouteTable:
     Type: "AWS::EC2::RouteTable"
     Properties:
-      VpcId: !Ref QuickOpsVPC  # Associate this route table with the same VPC
+      VpcId: !Ref OpenVpnVPC  # Associate this route table with the same VPC
       Tags:
         - Key: "Name"
           Value: "PublicRouteTable"
@@ -155,7 +110,7 @@ Resources:
     Properties:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: "0.0.0.0/0"  # Route all traffic to the internet
-      GatewayId: !Ref QuickOpsInternetGateway  # Ensure this references the correct IGW
+      GatewayId: !Ref OpenVpnInternetGateway  # Ensure this references the correct IGW
 
   # Associate the public route table with the public subnets
   PublicSubnet1RouteTableAssociation:
@@ -177,40 +132,35 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
 
   # Security Group for the EC2 instance
-  QuickOpsSecurityGroup:
+  OpenVpnSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupDescription: "Quick Ops - Allow SSH and HTTP access"
-      VpcId: !Ref QuickOpsVPC
+      GroupDescription: "OpenVPN - Allow SSH and HTTP access"
+      VpcId: !Ref OpenVpnVPC
       SecurityGroupIngress:
         - IpProtocol: "tcp"
           FromPort: 22
           ToPort: 22
           Description: "ssh"
           CidrIp: "0.0.0.0/0"
-        - IpProtocol: "tcp"
-          FromPort: !Ref TelegramProxyPort
-          ToPort: !Ref TelegramProxyPort
-          Description: "mtg"
-          CidrIp: "0.0.0.0/0"   
         - IpProtocol: "udp"
-          FromPort: !Ref OpenVpnPort
-          ToPort: !Ref OpenVpnPort
-          Description: "OpenVPN"
+          FromPort: 1194
+          ToPort: 1194
+          Description: "OpenVPN UDP"
           CidrIp: "0.0.0.0/0"   
         - IpProtocol: "tcp"
-          FromPort: !Ref XrayPanelPort
-          ToPort: !Ref XrayPanelPort
-          Description: "x-ui"
-          CidrIp: "0.0.0.0/0"
+          FromPort: 443
+          ToPort: 443
+          Description: "OpenVPN TCP"
+          CidrIp: "0.0.0.0/0"   
         - IpProtocol: "tcp"
-          FromPort: !Ref XrayClientPortFrom
-          ToPort: !Ref XrayClientPortTo
-          Description: "xray"
-          CidrIp: "0.0.0.0/0"
+          FromPort: 943
+          ToPort: 943
+          Description: "OpenVPN Admin"
+          CidrIp: "1.1.1.1/24"   
 
   # IAM Role for the Spot Instance
-  QuickOpsSpotInstanceRole:
+  OpenVpnSpotInstanceRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -252,8 +202,8 @@ Resources:
                   - "s3:ListBucket"
                   - "s3:ListBucketVersions"
                 Resource: 
-                  - !Sub "${QuickOpsS3Bucket.Arn}/*"
-                  - !Sub "${QuickOpsS3Bucket.Arn}"
+                  - !Sub "${OpenVpnS3Bucket.Arn}/*"
+                  - !Sub "${OpenVpnS3Bucket.Arn}"
         - PolicyName: "AssociateEipWithEc2"
           PolicyDocument:
             Version: "2012-10-17"
@@ -267,21 +217,21 @@ Resources:
                   - "arn:aws:ec2:*:*:network-interface/*"
   
   # Instance Profile that will associate the above IAM role with the EC2 instance
-  QuickOpsSpotInstanceProfile:
+  OpenVpnSpotInstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
     Properties:
       Roles:
-        - Ref: QuickOpsSpotInstanceRole
+        - Ref: OpenVpnSpotInstanceRole
 
   # Launch Template for the EC2 Spot Instance
-  QuickOpsSpotInstanceLaunchTemplate:
+  OpenVpnSpotInstanceLaunchTemplate:
     Type: "AWS::EC2::LaunchTemplate"
     Properties:
       LaunchTemplateData:
         InstanceType: "t3.nano"
         KeyName: !Ref KeyPairName            # Use the key pair parameter
         IamInstanceProfile:
-          Arn: !GetAtt QuickOpsSpotInstanceProfile.Arn  # Attach the IAM role
+          Arn: !GetAtt OpenVpnSpotInstanceProfile.Arn  # Attach the IAM role
         ImageId: !Sub "{{resolve:ssm:${LatestUbuntuAmi}}}"  # Use SSM parameter to fetch the specified Ubuntu AMI ID
         BlockDeviceMappings:  # Specify EBS volume configuration
           - DeviceName: "/dev/xvda"
@@ -290,30 +240,13 @@ Resources:
               VolumeType: "gp3"  # Use gp3 EBS volume type
               DeleteOnTermination: true  # Delete volume on termination
         SecurityGroupIds:
-          - !Ref QuickOpsSecurityGroup  # Attach the security group to the instance
+          - !Ref OpenVpnSecurityGroup  # Attach the security group to the instance
         UserData:  # User data to bootstrap the instance
           Fn::Base64: !Sub |
             #!/bin/bash
-            set -x
-            sudo apt-get update
-            sudo apt-get -y install awscli net-tools
-            ### parameters ###
-            echo "export xray_port=${XrayClientPortFrom}" >> /env
-            echo "export xui_port=${XrayPanelPort}" >> /env
-            echo "export mtg_port=${TelegramProxyPort}" >> /env
-            echo "export openvpn_port=${OpenVpnPort}" >> /env
-            echo "export mtg_secret=${TelegramProxySecret}" >> /env
-            echo "export eip_allocation_id=${ElasticIpAllocationId}" >> /env
-            echo "export afraid_update_key=${AfraidUpdateKey}" >> /env
-            echo "export domain_name=${DomainName}" >> /env
-            echo "export openvpn_user1_password='${OpenvpnUser1Password}'" >> /env
-            echo "export s3_bucket_arn=${QuickOpsS3Bucket.Arn}" >> /env
-            echo "export scripts_dir=/opt/scripts" >> /env
-            ### prepare ###
-            source /env
-            git clone -b ${GitRepoBranch} ${GitRepoUrl} $scripts_dir
-            chmod +x -R $scripts_dir
-            source $scripts_dir/bootstrap.sh
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sh ./get-docker.sh
+            docker run -d --name=openvpn-as --device /dev/net/tun --cap-add=MKNOD --cap-add=NET_ADMIN -p 943:943 -p 443:443 -p 1194:1194/udp openvpn/openvpn-as
 
   # Auto Scaling Group to manage the Spot Instances
   SpotInstanceAutoScalingGroup:
@@ -329,8 +262,8 @@ Resources:
       MixedInstancesPolicy:
         LaunchTemplate:
           LaunchTemplateSpecification:
-            LaunchTemplateId: !Ref QuickOpsSpotInstanceLaunchTemplate  # Reference the launch template
-            Version: !GetAtt QuickOpsSpotInstanceLaunchTemplate.LatestVersionNumber  # Use the latest version of the Launch Template
+            LaunchTemplateId: !Ref OpenVpnSpotInstanceLaunchTemplate  # Reference the launch template
+            Version: !GetAtt OpenVpnSpotInstanceLaunchTemplate.LatestVersionNumber  # Use the latest version of the Launch Template
           Overrides:
             - InstanceType: "t3.nano"
             - InstanceType: "t3.micro" 
