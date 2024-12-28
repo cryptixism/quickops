@@ -144,16 +144,6 @@ Resources:
           ToPort: 1194
           Description: "OpenVPN UDP"
           CidrIp: "0.0.0.0/0"   
-        - IpProtocol: "tcp"
-          FromPort: 443
-          ToPort: 443
-          Description: "OpenVPN TCP"
-          CidrIp: "0.0.0.0/0"   
-        - IpProtocol: "tcp"
-          FromPort: 943
-          ToPort: 943
-          Description: "OpenVPN Admin"
-          CidrIp: "1.1.1.1/24"   
 
   # IAM Role for the Spot Instance
   OpenVpnSpotInstanceRole:
