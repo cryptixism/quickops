@@ -225,7 +225,7 @@ Resources:
             docker volume create --name $openvpn_volume
             docker run -v $openvpn_volume:/etc/openvpn --rm kylemanna/openvpn ovpn_genconfig -u udp://$domain_name
             docker run -v $openvpn_volume:/etc/openvpn --rm -e "EASYRSA_BATCH=1" kylemanna/openvpn ovpn_initpki nopass
-            docker run -v $openvpn_volume:/etc/openvpn -d -p 1194:1194/udp --cap-add=NET_ADMIN kylemanna/openvpn
+            docker run -v $openvpn_volume:/etc/openvpn -d -p 1194:1194/udp --privileged kylemanna/openvpn
             docker run -v $openvpn_volume:/etc/openvpn --rm kylemanna/openvpn easyrsa build-client-full $username nopass
             docker run -v $openvpn_volume:/etc/openvpn --rm kylemanna/openvpn ovpn_getclient $username > $username.ovpn
             aws s3api put-object --bucket $s3_bucket_name --key $username.ovpn --body $username.ovpn
