@@ -21,5 +21,8 @@ source $scripts_dir/lib/xui/run.sh
 ## health service that checks health 
 source $scripts_dir/lib/health/run.sh
 
-## backup service that trigger for interuptions, scale-in events, and terminations
+## backup service that trigger for interruptions, scale-in events, and terminations
 source $scripts_dir/lib/backup/run.sh
+
+## installing and configuring openVPN
+source $scripts_dir/lib/openvpn/run.sh

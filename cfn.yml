@@ -8,6 +8,10 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: "Key pair to access the instance."
 
+  OpenvpnUser1Password:
+    Type: String
+    Description: "The password for the user1 in OpenVPN"
+
   DomainName:
     Type: String
     Description: "The domain name."
@@ -27,6 +31,11 @@ Parameters:
     Type: String
     Description: "The port that will be opened for the Telegram Proxy"
     Default: "36343"
+  
+  OpenVpnPort:
+    Type: String
+    Description: "The port that will be opened for the OpenVPN"
+    Default: "27257"
 
   ElasticIpAllocationId:
     Type: String
@@ -184,6 +193,11 @@ Resources:
           ToPort: !Ref TelegramProxyPort
           Description: "mtg"
           CidrIp: "0.0.0.0/0"   
+        - IpProtocol: "udp"
+          FromPort: !Ref OpenVpnPort
+          ToPort: !Ref OpenVpnPort
+          Description: "OpenVPN"
+          CidrIp: "0.0.0.0/0"   
         - IpProtocol: "tcp"
           FromPort: !Ref XrayPanelPort
           ToPort: !Ref XrayPanelPort
@@ -247,6 +261,7 @@ Resources:
               - Effect: "Allow"
                 Action: 
                   - "ec2:AssociateAddress"
+                  - "ec2:ModifyInstanceAttribute"
                 Resource: 
                   - "arn:aws:ec2:*:*:instance/*"
                   - "arn:aws:ec2:*:*:elastic-ip/*"
@@ -264,7 +279,6 @@ Resources:
     Type: "AWS::EC2::LaunchTemplate"
     Properties:
       LaunchTemplateData:
-        InstanceType: "t3.nano"
         KeyName: !Ref KeyPairName            # Use the key pair parameter
         IamInstanceProfile:
           Arn: !GetAtt QuickOpsSpotInstanceProfile.Arn  # Attach the IAM role
@@ -287,10 +301,12 @@ Resources:
             echo "export xray_port=${XrayClientPortFrom}" >> /env
             echo "export xui_port=${XrayPanelPort}" >> /env
             echo "export mtg_port=${TelegramProxyPort}" >> /env
+            echo "export openvpn_port=${OpenVpnPort}" >> /env
             echo "export mtg_secret=${TelegramProxySecret}" >> /env
             echo "export eip_allocation_id=${ElasticIpAllocationId}" >> /env
             echo "export afraid_update_key=${AfraidUpdateKey}" >> /env
             echo "export domain_name=${DomainName}" >> /env
+            echo "export openvpn_user1_password='${OpenvpnUser1Password}'" >> /env
             echo "export s3_bucket_arn=${QuickOpsS3Bucket.Arn}" >> /env
             echo "export scripts_dir=/opt/scripts" >> /env
             ### prepare ###
@@ -316,7 +332,6 @@ Resources:
             LaunchTemplateId: !Ref QuickOpsSpotInstanceLaunchTemplate  # Reference the launch template
             Version: !GetAtt QuickOpsSpotInstanceLaunchTemplate.LatestVersionNumber  # Use the latest version of the Launch Template
           Overrides:
-            - InstanceType: "t3.nano"
             - InstanceType: "t3.micro" 
             - InstanceType: "t3.medium" 
         InstancesDistribution:
