@@ -7,9 +7,11 @@ echo "user1:${openvpn_user1_password}" | sudo chpasswd
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
 ## Set variables
-OPENVPN_DIR="/etc/openvpn/"
+OPENVPN_DIR="/etc/openvpn"
 CLIENT_CONFIG="$OPENVPN_DIR/ccd/user1.ovpn"
 SERVER_CONFIG="$OPENVPN_DIR/server.conf"
+
+mkdir -p $OPENVPN_DIR/ccd
 
 ## Copy configs
 cp $scripts_dir/lib/openvpn/client.ovpn $CLIENT_CONFIG
