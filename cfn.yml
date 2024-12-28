@@ -8,10 +8,6 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: "Key pair to access the instance."
 
-  OpenvpnUser1Password:
-    Type: String
-    Description: "The password for the user1 in OpenVPN"
-
   DomainName:
     Type: String
     Description: "The domain name."
@@ -171,25 +167,6 @@ Resources:
               Service: "ec2.amazonaws.com"
             Action: "sts:AssumeRole"
       Policies:
-        - PolicyName: "SpotAndSSMReadPolicy"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              # Grant EC2 instances access to necessary Spot and Auto Scaling actions
-              - Effect: "Allow"
-                Action:
-                  - "ec2:DescribeSpotInstanceRequests"
-                  - "ec2:DescribeInstances"
-                  - "autoscaling:DescribeAutoScalingGroups"
-                  - "autoscaling:UpdateAutoScalingGroup"
-                Resource: "*"  # Allow actions on all resources; restrict as necessary
-              # Grant read-only access to SSM parameters under /manual/conf/*
-              - Effect: "Allow"
-                Action:
-                  - "ssm:GetParameter"
-                  - "ssm:GetParameters"
-                Resource: 
-                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/manual/conf/*"  # Using !Sub for dynamic ARN
         - PolicyName: "S3AccessPolicy"
           PolicyDocument:
             Version: "2012-10-17"
@@ -204,17 +181,6 @@ Resources:
                 Resource: 
                   - !Sub "${OpenVpnS3Bucket.Arn}/*"
                   - !Sub "${OpenVpnS3Bucket.Arn}"
-        - PolicyName: "AssociateEipWithEc2"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action: 
-                  - "ec2:AssociateAddress"
-                Resource: 
-                  - "arn:aws:ec2:*:*:instance/*"
-                  - "arn:aws:ec2:*:*:elastic-ip/*"
-                  - "arn:aws:ec2:*:*:network-interface/*"
   
   # Instance Profile that will associate the above IAM role with the EC2 instance
   OpenVpnSpotInstanceProfile:
@@ -228,7 +194,7 @@ Resources:
     Type: "AWS::EC2::LaunchTemplate"
     Properties:
       LaunchTemplateData:
-        InstanceType: "t3.nano"
+        InstanceType: "t3.micro"
         KeyName: !Ref KeyPairName            # Use the key pair parameter
         IamInstanceProfile:
           Arn: !GetAtt OpenVpnSpotInstanceProfile.Arn  # Attach the IAM role
@@ -244,9 +210,21 @@ Resources:
         UserData:  # User data to bootstrap the instance
           Fn::Base64: !Sub |
             #!/bin/bash
+            export afraid_update_key=${AfraidUpdateKey}
+            export domain_name=${DomainName}
+            export s3_bucket_arn=${OpenVpnS3Bucket.Arn}
+            export s3_bucket_name=$s3_bucket_arn##*:
+            export openvpn_data=/opt/openvpn/data
+            export username=user1
+            curl https://freedns.afraid.org/dynamic/update.php?$afraid_update_key
             curl -fsSL https://get.docker.com -o get-docker.sh
             sh ./get-docker.sh
-            docker run -d --name=openvpn-as --device /dev/net/tun --cap-add=MKNOD --cap-add=NET_ADMIN -p 943:943 -p 443:443 -p 1194:1194/udp openvpn/openvpn-as
+            docker run -v $openvpn_data:/etc/openvpn --rm kylemanna/openvpn ovpn_genconfig -u udp://$domain_name
+            docker run -v $openvpn_data:/etc/openvpn --rm -it kylemanna/openvpn ovpn_initpki
+            docker run -v $openvpn_data:/etc/openvpn -d -p 1194:1194/udp --cap-add=NET_ADMIN kylemanna/openvpn
+            docker run -v $openvpn_data:/etc/openvpn --rm -it kylemanna/openvpn easyrsa build-client-full $username nopass
+            docker run -v $openvpn_data:/etc/openvpn --rm kylemanna/openvpn ovpn_getclient $username > $username.ovpn
+            aws s3api put-object --bucket $s3_bucket_name --key $username.ovpn --body $username.ovpn
 
   # Auto Scaling Group to manage the Spot Instances
   SpotInstanceAutoScalingGroup:
