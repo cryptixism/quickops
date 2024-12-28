@@ -5,6 +5,7 @@ apt install -y openvpn
 useradd user1
 echo "user1:${openvpn_user1_password}" | sudo chpasswd
 echo 1 > /proc/sys/net/ipv4/ip_forward
+iptables -t nat -A POSTROUTING -s 10.20.0.0/24 -o ens5 -j MASQUERADE
 
 ## Set variables
 OPENVPN_DIR="/etc/openvpn"
@@ -49,4 +50,3 @@ systemctl enable openvpn@server
 # tcpdump -i tun0 icmp -vv
 # ip route show
 # route -n
-# iptables -t nat -A POSTROUTING -s 10.20.0.0/24 -o ens5 -j MASQUERADE
