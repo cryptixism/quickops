@@ -3,7 +3,9 @@
 ## Update and install required packages
 apt install -y openvpn 
 useradd user1
+set +H
 echo "user1:${openvpn_user1_password}" | sudo chpasswd
+set -H
 echo 1 > /proc/sys/net/ipv4/ip_forward
 iptables -t nat -A POSTROUTING -s 10.20.0.0/24 -o ens5 -j MASQUERADE
 
