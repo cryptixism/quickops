@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eux
 
 source /env
 
@@ -23,7 +23,11 @@ FILES=(
 # Restore files from S3
 for file in "${!FILES[@]}"; do
   FILE_PATH="${FILES[$file]}"
-  aws s3 cp "s3://$S3_BUCKET/$S3_PATH/$file" "$FILE_PATH"
+  if aws s3 ls "s3://$S3_BUCKET/$S3_PATH/$file" >/dev/null 2>&1; then
+    aws s3 cp "s3://$S3_BUCKET/$S3_PATH/$file" "$FILE_PATH"
+  else
+    echo "Skipping $file: not found in S3."
+  fi
 done
 
 # Set correct ownership
