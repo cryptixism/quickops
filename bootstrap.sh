@@ -27,4 +27,4 @@ source $scripts_dir/lib/address/run.sh
 # source $scripts_dir/lib/backup/run.sh
 
 ## installing and configuring openVPN
-source $scripts_dir/lib/openvpnas/run.sh
+# source $scripts_dir/lib/openvpnas/run.sh
