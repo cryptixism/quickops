@@ -26,12 +26,8 @@ for file in "${!FILES[@]}"; do
     echo "Warning: $FILE_PATH does not exist, skipping."
     continue
   fi
-  OWNER=$(stat -f '%Su' "$FILE_PATH")
-  if [ "$OWNER" != "openvpn" ]; then
-    echo "Warning: $FILE_PATH is not owned by openvpn."
-  fi
   # Upload to S3 with timestamp
-  aws s3 cp "$FILE_PATH" "s3://$S3_BUCKET/$S3_PATH/${file%.db}.${file##*.}"
+  aws s3 cp "$FILE_PATH" "s3://$S3_BUCKET/$S3_PATH/$file"
 done
 
 echo "Backup completed successfully."

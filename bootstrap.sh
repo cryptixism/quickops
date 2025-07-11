@@ -4,12 +4,13 @@ set -x
 export DEBIAN_FRONTEND=noninteractive
 
 region=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | grep region | awk -F\" '{print $4}')
-echo "export AWS_DEFAULT_REGION=${region}" >> /env
+echo "export aws_region=${region}" >> /env
 
 ## env variables
 source /env
 export s3_dir=/opt/s3
 export s3_bucket_name=${s3_bucket_arn##*:} # split arn and take last part
+echo "export s3_bucket_name=${s3_bucket_name}" >> /env
 mkdir -p $s3_dir
 
 ## handle address updates
