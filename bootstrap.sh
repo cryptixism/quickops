@@ -9,8 +9,8 @@ export s3_dir=/opt/s3
 export s3_bucket_name=${s3_bucket_arn##*:} # split arn and take last part
 mkdir -p $s3_dir
 
-# ## handle address updates
-# source $scripts_dir/lib/address/run.sh
+## handle address updates
+source $scripts_dir/lib/address/run.sh
 
 ## installing and configuring mtg
 ## https://github.com/9seconds/mtg
