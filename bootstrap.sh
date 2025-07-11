@@ -3,6 +3,9 @@ set -x
 
 export DEBIAN_FRONTEND=noninteractive
 
+region=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | grep region | awk -F\" '{print $4}')
+echo "export AWS_DEFAULT_REGION=${region}" >> /env
+
 ## env variables
 source /env
 export s3_dir=/opt/s3

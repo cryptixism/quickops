@@ -1,9 +1,6 @@
 #!/bin/bash
 set -eux
 
-apt-get update -y
-apt-get install -y net-tools curl wget awscli
-
 mkdir -p /etc/apt/keyrings
 wget https://packages.openvpn.net/as-repo-public.asc -qO /etc/apt/keyrings/as-repository.asc
 
