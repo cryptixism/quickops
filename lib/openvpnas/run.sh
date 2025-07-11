@@ -23,9 +23,9 @@ systemctl start openvpnas
 
 # enable backup service
 
-# cp $scripts_dir/lib/openvpnas/backup.service /etc/systemd/system/backup.service
-# sed -i "s|SCRIPT_DIR|${scripts_dir}|g" /etc/systemd/system/backup.service
+cp $scripts_dir/lib/openvpnas/backup.service /etc/systemd/system/backup.service
+sed -i "s|SCRIPT_DIR|${scripts_dir}|g" /etc/systemd/system/backup.service
 
-# systemctl daemon-reload
-# systemctl enable backup.service
-# systemctl start backup.service
+systemctl daemon-reload
+systemctl enable backup.service
+systemctl start backup.service
