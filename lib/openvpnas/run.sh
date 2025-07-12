@@ -4,7 +4,7 @@ set -eux
 mkdir -p /etc/apt/keyrings
 wget https://packages.openvpn.net/as-repo-public.asc -qO /etc/apt/keyrings/as-repository.asc
 
-echo "deb [arch=arm64 signed-by=/etc/apt/keyrings/as-repository.asc] http://packages.openvpn.net/as/debian jammy main" > /etc/apt/sources.list.d/openvpn-as-repo.list
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/as-repository.asc] http://packages.openvpn.net/as/debian jammy main" > /etc/apt/sources.list.d/openvpn-as-repo.list
 
 apt-get update -y
 apt-get install -y openvpn-as build-essential gcc-12 g++-12
