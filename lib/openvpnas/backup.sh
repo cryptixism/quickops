@@ -31,4 +31,4 @@ for file in "${!FILES[@]}"; do
 done
 
 echo "Backup completed successfully."
-aws ec2 create-tags --region ${aws_region} --resources ${instance_id} --tags Key=Name,Value=GONE"
+aws ec2 create-tags --region ${aws_region} --resources ${instance_id} --tags "Key=Name,Value=GONE"
