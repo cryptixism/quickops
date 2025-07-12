@@ -17,8 +17,6 @@ make install
 depmod -a
 modprobe ovpn-dco-v2
 
-systemctl enable openvpnas
-
 # restore configuration
 
 source $scripts_dir/lib/openvpnas/restore.sh
