@@ -32,3 +32,6 @@ source $scripts_dir/lib/address/run.sh
 
 ## installing and configuring openVPN
 source $scripts_dir/lib/openvpnas/run.sh
+
+# Final
+aws ec2 create-tags --region ${aws_region} --resources ${instance_id} --tags Key=Name,Value=QuickOpsInstance"
