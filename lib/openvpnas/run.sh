@@ -20,7 +20,7 @@ modprobe ovpn-dco-v2
 # restore configuration
 
 source $scripts_dir/lib/openvpnas/restore.sh
-chown openvpn_as:openvpn_as /usr/local/openvpn_as/etc/db/*.db /usr/local/openvpn_as/etc/as.conf
+# chown openvpn_as:openvpn_as /usr/local/openvpn_as/etc/db/*.db /usr/local/openvpn_as/etc/as.conf
 systemctl restart openvpnas
 
 # enable backup service
@@ -31,3 +31,6 @@ sed -i "s|SCRIPT_DIR|${scripts_dir}|g" /etc/systemd/system/backup.service
 systemctl daemon-reload
 systemctl enable backup.service
 systemctl start backup.service
+
+
+# sudo /usr/local/openvpn_as/scripts/openvpnas --nodaemon
