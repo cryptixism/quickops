@@ -8,6 +8,8 @@ echo "deb [arch=arm64 signed-by=/etc/apt/keyrings/as-repository.asc] http://pack
 
 apt-get update -y
 apt-get install -y openvpn-as build-essential gcc-12 g++-12
+
+# install ovpn-dco kernel module
 git clone https://github.com/OpenVPN/ovpn-dco.git
 cd ovpn-dco
 make CC=gcc-12
@@ -20,9 +22,6 @@ systemctl enable openvpnas
 # restore configuration
 
 source $scripts_dir/lib/openvpnas/restore.sh
-
-chown openvpn_as:openvpn_as /usr/local/openvpn_as/etc/db/*.db /usr/local/openvpn_as/etc/as.conf
-
 systemctl restart openvpnas
 
 # enable backup service
