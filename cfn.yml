@@ -332,8 +332,10 @@ Resources:
             LaunchTemplateId: !Ref QuickOpsSpotInstanceLaunchTemplate  # Reference the launch template
             Version: !GetAtt QuickOpsSpotInstanceLaunchTemplate.LatestVersionNumber  # Use the latest version of the Launch Template
           Overrides:
-            - InstanceType: "t3.micro" 
-            - InstanceType: "t3.medium" 
+            - InstanceType: "t4g.nano"
+            - InstanceType: "t4g.micro"
+            - InstanceType: "t4g.small" 
+            - InstanceType: "t4g.medium"
         InstancesDistribution:
           SpotAllocationStrategy: "lowest-price"  # Set allocation strategy to lowest price
           SpotMaxPrice: !Ref MaxSpotPrice  # Set the maximum price to match the parameter
