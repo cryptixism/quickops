@@ -11,7 +11,7 @@ apt-get install -y openvpn-as
 
 # source $scripts_dir/lib/openvpnas/restore.sh
 
-chown openvpn:openvpn /usr/local/openvpn_as/etc/db/*.db /usr/local/openvpn_as/etc/as.conf
+chown openvpn_as:openvpn_as /usr/local/openvpn_as/etc/db/*.db /usr/local/openvpn_as/etc/as.conf
 
 systemctl restart openvpnas
 
